@@ -4,12 +4,16 @@ const { v4: uuidv4 } = require('uuid');
 // Create Farm
 const createFarm = async (req, res) => {
   try {
-    const { farmerId, districtId, farmArea, elevation, geomCoordinates, plantingYear } = req.body;
+    const { districtId, farmName, farmArea, elevation, inputCoordinates, plantingYear, cropType, description } = req.body;
+    
+    // For now, use a default farmer ID since we don't have auth middleware
+    // In production, this should come from req.user.uuid after authentication
+    const farmerId = req.body.farmerId || 'default-farmer-uuid';
 
-    if (!farmerId || !districtId || !farmArea || !elevation || !geomCoordinates || !plantingYear) {
+    if (!districtId || !farmName || !farmArea || !elevation || !plantingYear) {
       return res.status(400).json({
         success: false,
-        message: 'All farm fields are required',
+        message: 'District, farm name, area, elevation, and planting year are required',
       });
     }
 
@@ -18,10 +22,13 @@ const createFarm = async (req, res) => {
         uuid: uuidv4(),
         farmerId,
         districtId,
+        farmName,
         farmArea: parseFloat(farmArea),
         elevation: parseFloat(elevation),
-        geomCoordinates,
+        inputCoordinates: inputCoordinates || null,
         plantingYear: parseInt(plantingYear),
+        cropType: cropType || null,
+        description: description || null,
       },
       include: {
         farmer: true,
@@ -106,14 +113,14 @@ const getFarmByUuid = async (req, res) => {
 const updateFarm = async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { farmArea, elevation, geomCoordinates, plantingYear } = req.body;
+    const { farmArea, elevation, verifiedGeometry, plantingYear } = req.body;
 
     const farm = await prisma.farm.update({
       where: { uuid },
       data: {
         ...(farmArea && { farmArea: parseFloat(farmArea) }),
         ...(elevation && { elevation: parseFloat(elevation) }),
-        ...(geomCoordinates && { geomCoordinates }),
+        ...(verifiedGeometry && { verifiedGeometry }),
         ...(plantingYear && { plantingYear: parseInt(plantingYear) }),
       },
       include: {
@@ -129,6 +136,38 @@ const updateFarm = async (req, res) => {
     });
   } catch (error) {
     console.error('Update farm error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+// Get farms by district
+const getFarmsByDistrict = async (req, res) => {
+  try {
+    const { districtId } = req.params;
+    
+    const farms = await prisma.farm.findMany({
+      where: { districtId },
+      include: {
+        farmer: { select: { uuid: true, name: true, email: true } },
+        district: true,
+        productivities: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: farms,
+      count: farms.length
+    });
+  } catch (error) {
+    console.error('Get farms by district error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -164,6 +203,7 @@ module.exports = {
   createFarm,
   getAllFarms,
   getFarmByUuid,
+  getFarmsByDistrict,
   updateFarm,
   deleteFarm,
 };

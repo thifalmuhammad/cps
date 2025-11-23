@@ -11,7 +11,7 @@ export default function FarmRegistrationPage() {
     districtId: '',
     farmArea: '',
     elevation: '',
-    geomCoordinates: '',
+    inputCoordinates: '',
     plantingYear: new Date().getFullYear(),
   });
   const [message, setMessage] = useState('');
@@ -44,7 +44,8 @@ export default function FarmRegistrationPage() {
     try {
       const dataToSubmit = {
         ...formData,
-        farmerId: user?.uuid, // Auto-fill from logged-in user
+        farmerId: user?.uuid,
+        farmName: `${user?.name}'s Farm`, // Auto-generate from farmer name
       };
 
       const response = await farmAPI.create(dataToSubmit);
@@ -55,7 +56,7 @@ export default function FarmRegistrationPage() {
           districtId: '',
           farmArea: '',
           elevation: '',
-          geomCoordinates: '',
+          inputCoordinates: '',
           plantingYear: new Date().getFullYear(),
         });
         setTimeout(() => setMessage(''), 3000);
@@ -141,15 +142,14 @@ export default function FarmRegistrationPage() {
               required
             />
 
-            {/* Geom Coordinates */}
+            {/* Input Coordinates */}
             <Input
-              label="Geom Coordinates (GeoJSON) *"
-              name="geomCoordinates"
+              label="Location Coordinates (GeoJSON)"
+              name="inputCoordinates"
               type="text"
-              value={formData.geomCoordinates}
+              value={formData.inputCoordinates}
               onChange={handleChange}
-              placeholder='e.g., {"type":"Point","coordinates":[-6.2088,106.8456]}'
-              required
+              placeholder='{"type":"Point","coordinates":[106.8456,-6.2088]}'
             />
 
             {/* Planting Year */}

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { v4: uuidv4 } = require('uuid');
+const { validateUuid, validateEmail, validatePassword, validateStringLength, sanitizeString, sanitizeEmail } = require('../utils/validation');
 
 // Register User (Admin)
 const registerUser = async (req, res) => {
@@ -15,9 +16,34 @@ const registerUser = async (req, res) => {
       });
     }
 
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format',
+      });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long',
+      });
+    }
+
+    if (!validateStringLength(name, 2)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must be at least 2 characters long',
+      });
+    }
+
+    // Sanitize input
+    const sanitizedEmail = sanitizeEmail(email);
+    const sanitizedName = sanitizeString(name);
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: sanitizedEmail },
     });
 
     if (existingUser) {
@@ -28,16 +54,16 @@ const registerUser = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
     const user = await prisma.user.create({
       data: {
         uuid: uuidv4(),
-        name,
-        email,
+        name: sanitizedName,
+        email: sanitizedEmail,
         password: hashedPassword,
-        isAdmin: isAdmin || false,
+        isAdmin: Boolean(isAdmin),
         createdAt: new Date(),
       },
     });
@@ -57,7 +83,7 @@ const registerUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -84,7 +110,7 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -93,6 +119,14 @@ const getAllUsers = async (req, res) => {
 const getUserByUuid = async (req, res) => {
   try {
     const { uuid } = req.params;
+
+    // Validate UUID format
+    if (!validateUuid(uuid)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid UUID format',
+      });
+    }
 
     const user = await prisma.user.findUnique({
       where: { uuid },
@@ -121,7 +155,7 @@ const getUserByUuid = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };

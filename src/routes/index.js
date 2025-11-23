@@ -3,6 +3,7 @@ const router = express.Router();
 const userRoutes = require('./userRoutes');
 const districtRoutes = require('./districtRoutes');
 const farmRoutes = require('./farmRoutes');
+const farmVerificationRoutes = require('./farmVerificationRoutes');
 const productivityRoutes = require('./productivityRoutes');
 const warehouseRoutes = require('./warehouseRoutes');
 
@@ -10,6 +11,7 @@ const warehouseRoutes = require('./warehouseRoutes');
 router.use(userRoutes);
 router.use(districtRoutes);
 router.use(farmRoutes);
+router.use(farmVerificationRoutes);
 router.use(productivityRoutes);
 router.use(warehouseRoutes);
 

@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createProductivity, getAllProductivities, getProductivityByUuid, updateProductivity, deleteProductivity } = require('../controllers/productivityController');
+const { createWarehouse, getAllWarehouses, getWarehouseByUuid, updateWarehouse, deleteWarehouse } = require('../controllers/warehouseController');
 
-// Productivity routes
-router.post('/productivities', createProductivity);
-router.get('/productivities', getAllProductivities);
-router.get('/productivities/:uuid', getProductivityByUuid);
-router.put('/productivities/:uuid', updateProductivity);
-router.delete('/productivities/:uuid', deleteProductivity);
+// Warehouse routes
+router.post('/warehouses', createWarehouse);
+router.get('/warehouses', getAllWarehouses);
+router.get('/warehouses/:uuid', getWarehouseByUuid);
+router.put('/warehouses/:uuid', updateWarehouse);
+router.delete('/warehouses/:uuid', deleteWarehouse);
 
 module.exports = router;

@@ -1,17 +1,20 @@
 import React from 'react';
 
 export default function Card({ children, className = '', variant = 'default' }) {
-  const baseClasses = 'rounded-lg border bg-white transition-all duration-200';
+  const baseClasses = 'rounded-lg bg-white text-slate-950';
   
   const variants = {
-    default: 'border-slate-200 shadow-subtle hover:shadow-base hover:border-slate-300',
-    flat: 'border-slate-200 shadow-subtle',
-    elevated: 'border-slate-200 shadow-base',
+    default: 'shadow-sm',
+    elevated: 'shadow-md',
+    flat: 'shadow-none',
+    outline: 'bg-transparent shadow-none',
   };
 
   return (
     <div className={`${baseClasses} ${variants[variant]} ${className}`}>
-      {children}
+      <div className="p-6">
+        {children}
+      </div>
     </div>
   );
 }

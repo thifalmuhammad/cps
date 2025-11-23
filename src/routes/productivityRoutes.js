@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createFarm, getAllFarms, getFarmByUuid, updateFarm, deleteFarm } = require('../controllers/farmController');
+const { createProductivity, getAllProductivities, getProductivityByUuid, updateProductivity, deleteProductivity } = require('../controllers/productivityController');
 
-// Farm routes
-router.post('/farms', createFarm);
-router.get('/farms', getAllFarms);
-router.get('/farms/:uuid', getFarmByUuid);
-router.put('/farms/:uuid', updateFarm);
-router.delete('/farms/:uuid', deleteFarm);
+// Productivity routes
+router.post('/productivities', createProductivity);
+router.get('/productivities', getAllProductivities);
+router.get('/productivities/:uuid', getProductivityByUuid);
+router.put('/productivities/:uuid', updateProductivity);
+router.delete('/productivities/:uuid', deleteProductivity);
 
 module.exports = router;

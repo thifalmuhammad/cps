@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const { v4: uuidv4 } = require('uuid');
+const { validateUuid, validateStringLength, sanitizeString } = require('../utils/validation');
 
 // Create District
 const createDistrict = async (req, res) => {
@@ -13,11 +14,23 @@ const createDistrict = async (req, res) => {
       });
     }
 
+    // Validate input length and format
+    if (!validateStringLength(districtCode, 2) || !validateStringLength(districtName, 2)) {
+      return res.status(400).json({
+        success: false,
+        message: 'District code and name must be at least 2 characters long',
+      });
+    }
+
+    // Sanitize input
+    const sanitizedCode = sanitizeString(districtCode).toUpperCase();
+    const sanitizedName = sanitizeString(districtName);
+
     const district = await prisma.district.create({
       data: {
         uuid: uuidv4(),
-        districtCode,
-        districtName,
+        districtCode: sanitizedCode,
+        districtName: sanitizedName,
       },
     });
 
@@ -28,10 +41,19 @@ const createDistrict = async (req, res) => {
     });
   } catch (error) {
     console.error('Create district error:', error);
+    
+    // Handle Prisma specific errors
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        message: 'District code already exists',
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -49,7 +71,7 @@ const getAllDistricts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -58,6 +80,15 @@ const getAllDistricts = async (req, res) => {
 const getDistrictByUuid = async (req, res) => {
   try {
     const { uuid } = req.params;
+    
+    // Validate UUID format
+    if (!validateUuid(uuid)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid UUID format',
+      });
+    }
+    
     const district = await prisma.district.findUnique({
       where: { uuid },
     });
@@ -75,10 +106,18 @@ const getDistrictByUuid = async (req, res) => {
     });
   } catch (error) {
     console.error('Get district error:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'District not found',
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -89,12 +128,46 @@ const updateDistrict = async (req, res) => {
     const { uuid } = req.params;
     const { districtCode, districtName } = req.body;
 
+    // Validate UUID format
+    if (!validateUuid(uuid)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid UUID format',
+      });
+    }
+
+    // Validate at least one field is provided
+    if (!districtCode && !districtName) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one field (districtCode or districtName) is required',
+      });
+    }
+
+    // Prepare update data with sanitization
+    const updateData = {};
+    if (districtCode) {
+      if (!validateStringLength(districtCode, 2)) {
+        return res.status(400).json({
+          success: false,
+          message: 'District code must be at least 2 characters long',
+        });
+      }
+      updateData.districtCode = sanitizeString(districtCode).toUpperCase();
+    }
+    if (districtName) {
+      if (!validateStringLength(districtName, 2)) {
+        return res.status(400).json({
+          success: false,
+          message: 'District name must be at least 2 characters long',
+        });
+      }
+      updateData.districtName = sanitizeString(districtName);
+    }
+
     const district = await prisma.district.update({
       where: { uuid },
-      data: {
-        ...(districtCode && { districtCode }),
-        ...(districtName && { districtName }),
-      },
+      data: updateData,
     });
 
     res.json({
@@ -104,10 +177,25 @@ const updateDistrict = async (req, res) => {
     });
   } catch (error) {
     console.error('Update district error:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'District not found',
+      });
+    }
+    
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        message: 'District code already exists',
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
@@ -116,6 +204,14 @@ const updateDistrict = async (req, res) => {
 const deleteDistrict = async (req, res) => {
   try {
     const { uuid } = req.params;
+
+    // Validate UUID format
+    if (!validateUuid(uuid)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid UUID format',
+      });
+    }
 
     await prisma.district.delete({
       where: { uuid },
@@ -127,10 +223,25 @@ const deleteDistrict = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete district error:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'District not found',
+      });
+    }
+    
+    if (error.code === 'P2003') {
+      return res.status(409).json({
+        success: false,
+        message: 'Cannot delete district. It is referenced by other records.',
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };

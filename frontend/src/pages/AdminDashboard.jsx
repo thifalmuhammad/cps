@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { farmAPI, districtAPI, userAPI, productivityAPI, warehouseAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
+import Button from '../components/Button';
+import Badge from '../components/Badge';
 import 'leaflet/dist/leaflet.css';
 
 // Fix leaflet marker icons
@@ -26,49 +28,105 @@ export default function AdminDashboard() {
   const [recentFarms, setRecentFarms] = useState([]);
   const [allFarms, setAllFarms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [center] = useState([-6.2088, 106.8456]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, districtsRes, farmsRes, productivitiesRes, warehousesRes] = await Promise.all([
-          userAPI.getAll(),
-          districtAPI.getAll(),
-          farmAPI.getAll(),
-          productivityAPI.getAll(),
-          warehouseAPI.getAll(),
-        ]);
-
-        const farmsData = farmsRes.data || [];
-        setStats({
-          users: usersRes.data?.length || 0,
-          districts: districtsRes.data?.length || 0,
-          farms: farmsData.length,
-          productivities: productivitiesRes.data?.length || 0,
-          warehouses: warehousesRes.data?.length || 0,
-        });
-
-        setRecentFarms(farmsData.slice(0, 5));
-        setAllFarms(farmsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+  const fetchData = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    };
+      setError(null);
 
+      const [usersRes, districtsRes, farmsRes, productivitiesRes, warehousesRes] = await Promise.all([
+        userAPI.getAll(),
+        districtAPI.getAll(),
+        farmAPI.getAll(),
+        productivityAPI.getAll(),
+        warehouseAPI.getAll(),
+      ]);
+
+      // Use all farms data for display
+      const allFarmsData = farmsRes.data || [];
+
+      // Validate responses
+      if (!usersRes.success || !districtsRes.success || !farmsRes.success || 
+          !productivitiesRes.success || !warehousesRes.success) {
+        throw new Error('Failed to fetch some data');
+      }
+
+      setStats({
+        users: usersRes.data?.length || 0,
+        districts: districtsRes.data?.length || 0,
+        farms: allFarmsData.length,
+        productivities: productivitiesRes.data?.length || 0,
+        warehouses: warehousesRes.data?.length || 0,
+      });
+
+      setRecentFarms(allFarmsData.slice(0, 5));
+      // Use all farms for map (both verified and unverified)
+      setAllFarms(allFarmsData);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError(error.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
-  const parseCoordinates = (geomCoordinates) => {
-    try {
-      const geom = JSON.parse(geomCoordinates);
-      if (geom.type === 'Point' && geom.coordinates) {
-        return [geom.coordinates[1], geom.coordinates[0]];
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading && !refreshing) {
+        fetchData(true);
       }
-    } catch (e) {
-      console.error('Error parsing coordinates:', e);
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [loading, refreshing]);
+
+  const parseGeometry = (farm) => {
+    // Try verified geometry first (polygon)
+    if (farm.verifiedGeometry) {
+      try {
+        const geom = JSON.parse(farm.verifiedGeometry);
+        if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
+          return {
+            type: 'polygon',
+            coordinates: geom.coordinates[0].map(coord => [coord[1], coord[0]])
+          };
+        }
+      } catch (e) {
+        console.error('Error parsing verified geometry:', e);
+      }
     }
+    
+    // Fallback to input coordinates (point)
+    if (farm.geomCoordinates || farm.inputCoordinates) {
+      try {
+        const coordStr = farm.geomCoordinates || farm.inputCoordinates;
+        const geom = JSON.parse(coordStr);
+        if (geom.type === 'Point' && geom.coordinates) {
+          return {
+            type: 'point',
+            coordinates: [geom.coordinates[1], geom.coordinates[0]]
+          };
+        }
+      } catch (e) {
+        console.error('Error parsing input coordinates:', e);
+      }
+    }
+    
     return null;
   };
 
@@ -85,60 +143,175 @@ export default function AdminDashboard() {
     return `${formatDate(startMonth)} - ${formatDate(endMonth)}`;
   };
 
+  const downloadReport = () => {
+    const reportData = {
+      generatedAt: new Date().toISOString(),
+      dateRange: getDateRange(),
+      statistics: stats,
+      recentFarms: recentFarms.map(farm => ({
+        district: farm.district?.districtName,
+        area: farm.farmArea,
+        elevation: farm.elevation,
+        plantingYear: farm.plantingYear
+      }))
+    };
+
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cps-dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFarmAction = async (farmUuid, action) => {
+    try {
+      // This would typically call an API to approve/reject the farm
+      console.log(`${action} farm:`, farmUuid);
+      
+      // For now, just show a confirmation and refresh data
+      const actionText = action === 'approve' ? 'approved' : 'rejected';
+      if (window.confirm(`Are you sure you want to ${action} this farm?`)) {
+        // Here you would call the actual API
+        // await farmAPI.updateStatus(farmUuid, action);
+        
+        alert(`Farm ${actionText} successfully!`);
+        fetchData(true);
+      }
+    } catch (error) {
+      console.error(`Error ${action}ing farm:`, error);
+      alert(`Failed to ${action} farm. Please try again.`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header Section */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+      <div className="bg-white">
+        <div className="px-8 py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="space-y-1">
               <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-              <p className="text-sm text-slate-600 mt-1">{getDateRange()}</p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-slate-600">{getDateRange()}</p>
+                {lastUpdated && (
+                  <p className="text-xs text-slate-500">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
             </div>
-            <button className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors">
-              Download Report
-            </button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => fetchData(true)}
+                disabled={refreshing}
+                variant="outline"
+                className="gap-2"
+              >
+                <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+              <Button 
+                onClick={downloadReport}
+                className="gap-2"
+              >
+                📊 Download Report
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="px-8 py-4">
+          <div className="bg-red-50 rounded-lg p-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-red-600 text-lg">⚠️</span>
+              </div>
+              <div>
+                <p className="text-red-900 font-medium">Error loading dashboard</p>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+              </div>
+            </div>
+            <Button 
+              onClick={() => fetchData()}
+              variant="outline"
+              size="sm"
+              className="bg-white text-red-700 hover:bg-red-50"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="px-8 py-8">
         {/* Stats Grid - Highlighted Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Farms Card */}
-          <Card variant="elevated">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Registered Farms</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">{stats.farms}</p>
-                <p className="text-xs text-slate-500 mt-2">📈 +12% from last month</p>
+          <Card variant="elevated" className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">Registered Farms</p>
+                  {loading ? (
+                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                  ) : (
+                    <p className="text-3xl font-bold text-slate-900">{stats.farms}</p>
+                  )}
+                  <p className="text-xs text-slate-500">📈 +12% from last month</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                  <span className="text-2xl">🌾</span>
+                </div>
               </div>
-              <span className="text-4xl">🌾</span>
             </div>
           </Card>
 
           {/* Districts Card */}
-          <Card variant="elevated">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Active Districts</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">{stats.districts}</p>
-                <p className="text-xs text-slate-500 mt-2">📊 Full coverage</p>
+          <Card variant="elevated" className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">Active Districts</p>
+                  {loading ? (
+                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                  ) : (
+                    <p className="text-3xl font-bold text-slate-900">{stats.districts}</p>
+                  )}
+                  <p className="text-xs text-slate-500">📊 Full coverage</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                  <span className="text-2xl">📍</span>
+                </div>
               </div>
-              <span className="text-4xl">📍</span>
             </div>
           </Card>
 
           {/* Users Card */}
-          <Card variant="elevated">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Users</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">{stats.users}</p>
-                <p className="text-xs text-slate-500 mt-2">👥 Active accounts</p>
+          <Card variant="elevated" className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">Total Users</p>
+                  {loading ? (
+                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                  ) : (
+                    <p className="text-3xl font-bold text-slate-900">{stats.users}</p>
+                  )}
+                  <p className="text-xs text-slate-500">👥 Active accounts</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                  <span className="text-2xl">👤</span>
+                </div>
               </div>
-              <span className="text-4xl">👤</span>
             </div>
           </Card>
         </div>
@@ -149,9 +322,23 @@ export default function AdminDashboard() {
           <div className="lg:col-span-2">
             {!loading && (
               <Card variant="default" className="p-0 overflow-hidden">
-                <div className="p-6 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900">Farm Distribution Map</h2>
-                  <p className="text-sm text-slate-600 mt-1">{allFarms.length} farms visualized</p>
+                <div className="p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">Farm Distribution Map</h2>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {allFarms.length} farms registered
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => fetchData(true)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-600 hover:text-slate-900"
+                    >
+                      🔄 Update Map
+                    </Button>
+                  </div>
                 </div>
                 <MapContainer
                   center={center}
@@ -163,20 +350,65 @@ export default function AdminDashboard() {
                     attribution='&copy; OpenStreetMap contributors'
                   />
                   {allFarms.map((farm) => {
-                    const coords = parseCoordinates(farm.geomCoordinates);
-                    return coords ? (
-                      <Marker key={farm.uuid} position={coords}>
-                        <Popup>
-                          <div>
-                            <h3 className="font-bold text-sm">{farm.district?.districtName}</h3>
-                            <p className="text-xs">Area: {farm.farmArea} ha</p>
-                            <p className="text-xs">Elevation: {farm.elevation}m</p>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ) : null;
+                    const geometry = parseGeometry(farm);
+                    if (!geometry) return null;
+                    
+                    const popupContent = (
+                      <div className="p-2">
+                        <h3 className="font-semibold text-sm mb-2">
+                          {farm.farmName || farm.district?.districtName || 'Farm'}
+                        </h3>
+                        <div className="space-y-1 text-xs">
+                          <p><span className="font-medium">Farmer:</span> {farm.farmer?.name}</p>
+                          <p><span className="font-medium">District:</span> {farm.district?.districtName}</p>
+                          <p><span className="font-medium">Area:</span> {farm.farmArea} ha</p>
+                          <p><span className="font-medium">Elevation:</span> {farm.elevation}m</p>
+                          <p><span className="font-medium">Status:</span> {farm.status || 'Registered'}</p>
+                        </div>
+                      </div>
+                    );
+                    
+                    if (geometry.type === 'polygon') {
+                      const isVerified = farm.status === 'VERIFIED';
+                      return (
+                        <Polygon 
+                          key={farm.uuid} 
+                          positions={geometry.coordinates}
+                          pathOptions={{
+                            color: isVerified ? '#059669' : '#f59e0b',
+                            fillColor: isVerified ? '#10b981' : '#fbbf24',
+                            fillOpacity: 0.3,
+                            weight: 2
+                          }}
+                        >
+                          <Popup>{popupContent}</Popup>
+                        </Polygon>
+                      );
+                    } else {
+                      return (
+                        <Marker key={farm.uuid} position={geometry.coordinates}>
+                          <Popup>{popupContent}</Popup>
+                        </Marker>
+                      );
+                    }
                   })}
                 </MapContainer>
+                <div className="p-4 bg-slate-50 border-t">
+                  <div className="flex items-center gap-6 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-3 bg-green-500 bg-opacity-30 border-2 border-green-600 rounded-sm"></div>
+                      <span className="text-slate-600">Verified Farms</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-3 bg-yellow-500 bg-opacity-30 border-2 border-yellow-600 rounded-sm"></div>
+                      <span className="text-slate-600">Pending Verification</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span className="text-slate-600">Farm Locations</span>
+                    </div>
+                  </div>
+                </div>
               </Card>
             )}
           </div>
@@ -184,28 +416,43 @@ export default function AdminDashboard() {
           {/* Quick Stats Sidebar */}
           <div className="space-y-6">
             {/* Productivity Card */}
-            <Card variant="default">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Productivity</p>
-                <p className="text-2xl font-bold text-slate-900 mt-2">{stats.productivities}</p>
-                <p className="text-xs text-slate-500 mt-2">records tracked</p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-xs font-medium text-slate-900">Status: Active</p>
+            <Card variant="default" className="p-0">
+              <div className="p-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">Total Productivity</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
+                  ) : (
+                    <p className="text-2xl font-bold text-slate-900">{stats.productivities}</p>
+                  )}
+                  <p className="text-xs text-slate-500">records tracked</p>
+                </div>
+                <div className="mt-4 pt-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                    <p className="text-xs font-medium text-slate-900">Active</p>
+                  </div>
+                </div>
               </div>
             </Card>
 
             {/* Warehouses Card */}
-            <Card variant="default">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Warehouses</p>
-                <p className="text-2xl font-bold text-slate-900 mt-2">{stats.warehouses}</p>
-                <p className="text-xs text-slate-500 mt-2">operational</p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <button className="text-xs font-medium text-slate-900 hover:text-slate-700">
-                  View Details →
-                </button>
+            <Card variant="default" className="p-0">
+              <div className="p-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">Warehouses</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
+                  ) : (
+                    <p className="text-2xl font-bold text-slate-900">{stats.warehouses}</p>
+                  )}
+                  <p className="text-xs text-slate-500">operational</p>
+                </div>
+                <div className="mt-4 pt-4">
+                  <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-medium text-slate-900 hover:text-slate-700">
+                    View Details →
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -213,20 +460,32 @@ export default function AdminDashboard() {
 
         {/* Recent Farms Section */}
         <div>
-          <Card variant="default">
-            <div className="border-b border-slate-200 pb-4 mb-4">
-              <h2 className="text-lg font-bold text-slate-900">Recent Farm Registrations</h2>
-              <p className="text-sm text-slate-600 mt-1">Latest registrations awaiting verification</p>
-            </div>
+          <Card variant="default" className="p-0">
+            <div className="p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-slate-900">Recent Farm Registrations</h2>
+                <p className="text-sm text-slate-600 mt-1">Latest registrations awaiting verification</p>
+              </div>
 
             {loading ? (
-              <p className="text-slate-600">Loading...</p>
+              <div className="space-y-3">
+                {[...Array(3)].map((_, idx) => (
+                  <div key={idx} className="p-4 bg-slate-50 rounded-lg">
+                    <div className="h-5 bg-slate-200 rounded animate-pulse mb-3"></div>
+                    <div className="flex gap-4">
+                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
+                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
+                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : recentFarms.length > 0 ? (
               <div className="space-y-3">
                 {recentFarms.map((farm, idx) => (
                   <div
                     key={farm.uuid}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
                   >
                     <div className="flex-1">
                       <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
@@ -236,15 +495,36 @@ export default function AdminDashboard() {
                         <span>📅 {farm.plantingYear}</span>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium whitespace-nowrap ml-4">
-                      Pending
-                    </span>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button 
+                        onClick={() => handleFarmAction(farm.uuid, 'approve')}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 bg-green-100 text-green-700 hover:bg-green-200"
+                        title="Approve Farm"
+                      >
+                        ✓
+                      </Button>
+                      <Button 
+                        onClick={() => handleFarmAction(farm.uuid, 'reject')}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 bg-red-100 text-red-700 hover:bg-red-200"
+                        title="Reject Farm"
+                      >
+                        ✗
+                      </Button>
+                      <Badge variant="pending">
+                        Pending
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-slate-600">No farms registered yet</p>
             )}
+            </div>
           </Card>
         </div>
       </div>

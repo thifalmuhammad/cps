@@ -23,7 +23,8 @@ model User {
   isAdmin   Boolean   @default(false) @map("is_admin")
   createdAt DateTime  @map("create_at")
   updatedAt DateTime? @map("update_at")
-  farms     Farm[]    @relation("FarmerToFarm")
+  farms           Farm[]    @relation("FarmerToFarm")
+  verifiedFarms   Farm[]    @relation("AdminVerifier")
 
   @@schema("CPS")
   @@map("t_user")
@@ -41,18 +42,41 @@ model District {
 
 model Farm {
   uuid              String          @id @default(uuid())
-  farmerId          String          @unique @map("farmer_id")
-  districtId        String          @unique @map("district_id")
+  farmerId          String          @map("farmer_id")
+  districtId        String          @map("district_id")
+  farmName          String          @map("farm_name")
   farmArea          Float           @map("farm_area")
   elevation         Float
-  geomCoordinates   String          @map("geom_coordinates")
   plantingYear      Int             @map("planting_year")
+  status            FarmStatus      @default(PENDING_VERIFICATION)
+  // Farmer input coordinates (point/rough area)
+  inputCoordinates  String?         @map("input_coordinates")
+  // Admin verified polygon from QGIS
+  verifiedGeometry  String?         @map("verified_geometry")
+  // Additional farm details
+  description       String?
+  cropType          String?         @map("crop_type")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  verifiedAt        DateTime?       @map("verified_at")
+  verifiedBy        String?         @map("verified_by")
+  
   farmer            User            @relation("FarmerToFarm", fields: [farmerId], references: [uuid], onDelete: Cascade)
   district          District        @relation(fields: [districtId], references: [uuid], onDelete: Cascade)
+  verifier          User?           @relation("AdminVerifier", fields: [verifiedBy], references: [uuid])
   productivities    Productivity[]
 
   @@schema("CPS")
   @@map("t_farm")
+}
+
+enum FarmStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+  NEEDS_UPDATE
+
+  @@schema("CPS")
 }
 
 model Productivity {
