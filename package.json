@@ -1,0 +1,30 @@
+{
+  "name": "cps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "dev": "concurrently \"npm start\" \"npm run frontend:dev\"",
+    "build": "npm run frontend:build",
+    "frontend:dev": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "lucide-react": "^0.554.0",
+    "pg": "^8.16.3",
+    "prisma": "^5.22.0",
+    "uuid": "^13.0.0"
+  }
+}

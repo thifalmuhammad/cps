@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["CPS"]
+}
+
+model User {
+  uuid      String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  isAdmin   Boolean   @default(false) @map("is_admin")
+  createdAt DateTime  @map("create_at")
+  updatedAt DateTime? @map("update_at")
+  farms     Farm[]    @relation("FarmerToFarm")
+
+  @@schema("CPS")
+  @@map("t_user")
+}
+
+model District {
+  uuid          String  @id @default(uuid())
+  districtCode  String  @unique @map("district_code")
+  districtName  String  @map("district_name")
+  farms         Farm[]
+
+  @@schema("CPS")
+  @@map("t_district")
+}
+
+model Farm {
+  uuid              String          @id @default(uuid())
+  farmerId          String          @unique @map("farmer_id")
+  districtId        String          @unique @map("district_id")
+  farmArea          Float           @map("farm_area")
+  elevation         Float
+  geomCoordinates   String          @map("geom_coordinates")
+  plantingYear      Int             @map("planting_year")
+  farmer            User            @relation("FarmerToFarm", fields: [farmerId], references: [uuid], onDelete: Cascade)
+  district          District        @relation(fields: [districtId], references: [uuid], onDelete: Cascade)
+  productivities    Productivity[]
+
+  @@schema("CPS")
+  @@map("t_farm")
+}
+
+model Productivity {
+  uuid              String    @id @default(uuid())
+  farmId            String    @map("farm_id")
+  harvestDate       DateTime  @map("harvest_date") @db.Date
+  productionAmount  Float     @map("production_amount")
+  sellingPrice      Float     @map("selling_price")
+  productivity      Float
+  farm              Farm      @relation(fields: [farmId], references: [uuid], onDelete: Cascade)
+
+  @@schema("CPS")
+  @@map("t_productivity")
+}
+
+model Warehouse {
+  uuid          String @id @default(uuid())
+  warehouseName String @map("warehouse_name")
+  location      String
+
+  @@schema("CPS")
+  @@map("t_warehouse")
+}
