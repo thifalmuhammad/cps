@@ -16,7 +16,26 @@ export default function FarmRegistrationPage() {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [loading, setLoading] = useState(false);
+    const [pendingFarms, setPendingFarms] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchPendingFarms = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = farmAPI.pendingFarms();
+
+            if (response.data.success) {
+                setPendingFarms(response.data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching pending farms:', err);
+            setError('Failed to load pending farms');
+        } finally {
+            setLoading(false);
+        }
+    };
 
   React.useEffect(() => {
     const fetchDistricts = async () => {
@@ -28,6 +47,7 @@ export default function FarmRegistrationPage() {
       }
     };
     fetchDistricts();
+    fetchPendingFarms();
   }, []);
 
   const handleChange = (e) => {
@@ -44,8 +64,7 @@ export default function FarmRegistrationPage() {
     try {
       const dataToSubmit = {
         ...formData,
-        farmerId: user?.uuid,
-        farmName: `${user?.name}'s Farm`, // Auto-generate from farmer name
+        farmerId: user?.uuid
       };
 
       const response = await farmAPI.create(dataToSubmit);

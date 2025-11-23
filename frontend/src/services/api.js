@@ -5,11 +5,11 @@ const validateUrl = (url) => {
   try {
     const parsedUrl = new URL(url);
     const baseUrl = new URL(API_BASE_URL);
-    
+
     // Only allow URLs with same hostname and port as API_BASE_URL
-    return parsedUrl.hostname === baseUrl.hostname && 
-           parsedUrl.port === baseUrl.port &&
-           parsedUrl.protocol === baseUrl.protocol;
+    return parsedUrl.hostname === baseUrl.hostname &&
+      parsedUrl.port === baseUrl.port &&
+      parsedUrl.protocol === baseUrl.protocol;
   } catch {
     return false;
   }
@@ -21,7 +21,7 @@ const apiRequest = async (url, options = {}) => {
   if (!validateUrl(url)) {
     throw new Error('Invalid or unauthorized URL');
   }
-  
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
@@ -147,6 +147,33 @@ export const farmAPI = {
       method: 'DELETE',
     });
   },
+
+  getPending: async () => {
+    return apiRequest(`${API_BASE_URL}/farms/pending`);
+  },
+
+  verify: async (farmId, data) => {
+    if (!farmId) throw new Error('Farm ID is required');
+    if (!data) throw new Error('Verification data is required');
+    return apiRequest(`${API_BASE_URL}/farms/${farmId}/verify`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  reject: async (farmId, data) => {
+    if (!farmId) throw new Error('Farm ID is required');
+    if (!data) throw new Error('Rejection data is required');
+    return apiRequest(`${API_BASE_URL}/farms/${farmId}/reject`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getByDistrict: async (districtId) => {
+    if (!districtId) throw new Error('District ID is required');
+    return apiRequest(`${API_BASE_URL}/districts/${districtId}/farms`);
+  }
 };
 
 // Productivity API

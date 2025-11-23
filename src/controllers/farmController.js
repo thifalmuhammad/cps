@@ -4,13 +4,13 @@ const { v4: uuidv4 } = require('uuid');
 // Create Farm
 const createFarm = async (req, res) => {
   try {
-    const { districtId, farmName, farmArea, elevation, inputCoordinates, plantingYear, cropType, description } = req.body;
-    
+    const { districtId, farmArea, elevation, inputCoordinates, plantingYear } = req.body;
+
     // For now, use a default farmer ID since we don't have auth middleware
     // In production, this should come from req.user.uuid after authentication
     const farmerId = req.body.farmerId || 'default-farmer-uuid';
 
-    if (!districtId || !farmName || !farmArea || !elevation || !plantingYear) {
+    if (!districtId || !farmArea || !elevation || !plantingYear) {
       return res.status(400).json({
         success: false,
         message: 'District, farm name, area, elevation, and planting year are required',
@@ -22,13 +22,10 @@ const createFarm = async (req, res) => {
         uuid: uuidv4(),
         farmerId,
         districtId,
-        farmName,
         farmArea: parseFloat(farmArea),
         elevation: parseFloat(elevation),
         inputCoordinates: inputCoordinates || null,
         plantingYear: parseInt(plantingYear),
-        cropType: cropType || null,
-        description: description || null,
       },
       include: {
         farmer: true,
@@ -148,7 +145,7 @@ const updateFarm = async (req, res) => {
 const getFarmsByDistrict = async (req, res) => {
   try {
     const { districtId } = req.params;
-    
+
     const farms = await prisma.farm.findMany({
       where: { districtId },
       include: {

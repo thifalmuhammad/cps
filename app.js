@@ -31,6 +31,12 @@ if (process.env.NODE_ENV === 'development') {
   }
 }
 
+// Debug middleware - log all requests to /api
+app.use('/api', (req, res, next) => {
+  console.log(`\n📍 [ROUTE] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // API routes
 app.use('/api', require('./src/routes'));
 
