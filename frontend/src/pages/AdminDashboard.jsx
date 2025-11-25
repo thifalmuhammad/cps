@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polygon, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
 import L from 'leaflet';
 import { farmAPI, districtAPI, userAPI, productivityAPI, warehouseAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +17,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function AdminDashboard() {
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   const { user } = useAuth();
   const [stats, setStats] = useState({
     users: 0,
@@ -27,6 +28,7 @@ export default function AdminDashboard() {
   });
   const [recentFarms, setRecentFarms] = useState([]);
   const [allFarms, setAllFarms] = useState([]);
+  const [verifiedFarms, setVerifiedFarms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,6 +44,8 @@ export default function AdminDashboard() {
       }
       setError(null);
 
+      console.log('📡 Fetching from API_BASE_URL:', API_BASE_URL);
+
       const [usersRes, districtsRes, farmsRes, productivitiesRes, warehousesRes] = await Promise.all([
         userAPI.getAll(),
         districtAPI.getAll(),
@@ -54,8 +58,8 @@ export default function AdminDashboard() {
       const allFarmsData = farmsRes.data || [];
 
       // Validate responses
-      if (!usersRes.success || !districtsRes.success || !farmsRes.success || 
-          !productivitiesRes.success || !warehousesRes.success) {
+      if (!usersRes.success || !districtsRes.success || !farmsRes.success ||
+        !productivitiesRes.success || !warehousesRes.success) {
         throw new Error('Failed to fetch some data');
       }
 
@@ -63,16 +67,36 @@ export default function AdminDashboard() {
         users: usersRes.data?.length || 0,
         districts: districtsRes.data?.length || 0,
         farms: allFarmsData.length,
-        productivities: productivitiesRes.data?.length || 0,
-        warehouses: warehousesRes.data?.length || 0,
+        productivities: productivitiesRes.success ? productivitiesRes.data?.length || 0 : 0,
+        warehouses: warehousesRes.success ? warehousesRes.data?.length || 0 : 0,
       });
 
       setRecentFarms(allFarmsData.slice(0, 5));
-      // Use all farms for map (both verified and unverified)
       setAllFarms(allFarmsData);
+
+      // Fetch verified farms separately (same as MapViewPage)
+      console.log('🔍 Fetching verified farms from:', `${API_BASE_URL}/farms/verified`);
+      const verifiedResponse = await fetch(`${API_BASE_URL}/farms/verified`);
+
+      if (!verifiedResponse.ok) {
+        throw new Error(`HTTP ${verifiedResponse.status}: ${verifiedResponse.statusText}`);
+      }
+
+      const verifiedData = await verifiedResponse.json();
+
+      console.log('✅ Verified farms received:', verifiedData);
+
+      if (verifiedData.success) {
+        console.log('📊 Verified farms count:', verifiedData.data?.length || 0);
+        setVerifiedFarms(verifiedData.data || []);
+      } else {
+        console.warn('⚠️ Verified farms fetch unsuccessful:', verifiedData.message || 'No data');
+        setVerifiedFarms([]);
+      }
+
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('❌ Error fetching data:', error);
       setError(error.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
@@ -110,7 +134,7 @@ export default function AdminDashboard() {
         console.error('Error parsing verified geometry:', e);
       }
     }
-    
+
     // Fallback to input coordinates (point)
     if (farm.geomCoordinates || farm.inputCoordinates) {
       try {
@@ -126,15 +150,38 @@ export default function AdminDashboard() {
         console.error('Error parsing input coordinates:', e);
       }
     }
-    
+
     return null;
+  };
+
+  // For verified farms section - parse geometry like MapViewPage does
+  const parseVerifiedGeometry = (geomString) => {
+    try {
+      const geom = JSON.parse(geomString);
+
+      // Handle FeatureCollection
+      if (geom.type === 'FeatureCollection') {
+        return geom;
+      }
+
+      // Handle Feature
+      if (geom.type === 'Feature') {
+        return geom.geometry;
+      }
+
+      // Handle raw geometry (Polygon, MultiPolygon, etc)
+      return geom;
+    } catch (e) {
+      console.error('Error parsing geometry:', e);
+      return null;
+    }
   };
 
   const getDateRange = () => {
     const today = new Date();
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
+
     const formatDate = (date) => {
       const options = { day: 'numeric', month: 'short', year: 'numeric' };
       return date.toLocaleDateString('en-US', options);
@@ -172,13 +219,13 @@ export default function AdminDashboard() {
     try {
       // This would typically call an API to approve/reject the farm
       console.log(`${action} farm:`, farmUuid);
-      
+
       // For now, just show a confirmation and refresh data
       const actionText = action === 'approve' ? 'approved' : 'rejected';
       if (window.confirm(`Are you sure you want to ${action} this farm?`)) {
         // Here you would call the actual API
         // await farmAPI.updateStatus(farmUuid, action);
-        
+
         alert(`Farm ${actionText} successfully!`);
         fetchData(true);
       }
@@ -206,7 +253,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button 
+              <Button
                 onClick={() => fetchData(true)}
                 disabled={refreshing}
                 variant="outline"
@@ -215,7 +262,7 @@ export default function AdminDashboard() {
                 <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
-              <Button 
+              <Button
                 onClick={downloadReport}
                 className="gap-2"
               >
@@ -239,7 +286,7 @@ export default function AdminDashboard() {
                 <p className="text-red-700 text-sm mt-1">{error}</p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => fetchData()}
               variant="outline"
               size="sm"
@@ -330,7 +377,7 @@ export default function AdminDashboard() {
                         {allFarms.length} farms registered
                       </p>
                     </div>
-                    <Button 
+                    <Button
                       onClick={() => fetchData(true)}
                       variant="ghost"
                       size="sm"
@@ -352,7 +399,7 @@ export default function AdminDashboard() {
                   {allFarms.map((farm) => {
                     const geometry = parseGeometry(farm);
                     if (!geometry) return null;
-                    
+
                     const popupContent = (
                       <div className="p-2">
                         <h3 className="font-semibold text-sm mb-2">
@@ -367,12 +414,12 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     );
-                    
+
                     if (geometry.type === 'polygon') {
                       const isVerified = farm.status === 'VERIFIED';
                       return (
-                        <Polygon 
-                          key={farm.uuid} 
+                        <Polygon
+                          key={farm.uuid}
                           positions={geometry.coordinates}
                           pathOptions={{
                             color: isVerified ? '#059669' : '#f59e0b',
@@ -458,6 +505,121 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Debug Section - Show data status */}
+        {!loading && process.env.NODE_ENV === 'development' && (
+          <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+            <p><strong>🔍 Debug Info:</strong></p>
+            <p>• All farms: {allFarms.length}</p>
+            <p>• Verified farms loaded: {verifiedFarms.length}</p>
+            <p>• Recent farms: {recentFarms.length}</p>
+            {verifiedFarms.length > 0 && (
+              <p>• First verified farm: {verifiedFarms[0].uuid} - {verifiedFarms[0].farmer?.name}</p>
+            )}
+          </div>
+        )}
+
+        {/* Verified Farms Map Section */}
+        {!loading && verifiedFarms.length > 0 && (
+          <div className="mb-8">
+            <Card variant="default" className="p-0 overflow-hidden">
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">📍 Verified Farms Location</h2>
+                    <p className="text-sm text-slate-600 mt-1">
+                      {verifiedFarms.length} {verifiedFarms.length === 1 ? 'farm' : 'farms'} with verified geometry
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => fetchData(true)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-600 hover:text-slate-900"
+                  >
+                    🔄 Update Map
+                  </Button>
+                </div>
+              </div>
+              <MapContainer
+                center={[2.5, 99.5]}
+                zoom={9}
+                style={{ height: '400px', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; OpenStreetMap contributors'
+                />
+                {verifiedFarms.map((farm) => {
+                  try {
+                    console.log(`🗺️ Processing farm for map: ${farm.uuid}`);
+                    console.log(`   Geometry string length: ${farm.verifiedGeometry?.length || 0}`);
+
+                    const geometry = parseVerifiedGeometry(farm.verifiedGeometry);
+                    console.log(`   Parsed geometry type: ${geometry?.type || 'null'}`);
+
+                    if (!geometry) {
+                      console.warn(`   ⚠️ Geometry is null for farm ${farm.uuid}`);
+                      return null;
+                    }
+
+                    // Convert FeatureCollection to simple geometry if needed
+                    let displayGeometry = geometry;
+                    if (geometry.type === 'FeatureCollection' && geometry.features?.length > 0) {
+                      console.log(`   Converting FeatureCollection to geometry`);
+                      displayGeometry = geometry.features[0].geometry;
+                      console.log(`   Final geometry type: ${displayGeometry?.type || 'null'}`);
+                    }
+
+                    console.log(`   ✅ Ready to render with type: ${displayGeometry?.type}`);
+
+                    return (
+                      <GeoJSONLayer
+                        key={farm.uuid}
+                        data={displayGeometry}
+                        style={{
+                          color: '#059669',
+                          weight: 2,
+                          opacity: 0.8,
+                          fillColor: '#10b981',
+                          fillOpacity: 0.3
+                        }}
+                        onEachFeature={(feature, layer) => {
+                          layer.bindPopup(`
+                            <div class="p-3 min-w-48">
+                              <h3 class="font-bold text-slate-900">${farm.farmer?.name || 'Unknown'}</h3>
+                              <p class="text-sm text-slate-600">${farm.district?.districtName}</p>
+                              <div class="grid grid-cols-2 gap-2 mt-2 text-xs text-slate-600">
+                                <span>📐 ${farm.farmArea} ha</span>
+                                <span>✓ Verified</span>
+                              </div>
+                            </div>
+                          `);
+                        }}
+                      />
+                    );
+                  } catch (e) {
+                    console.error('❌ Error rendering farm geometry:', e);
+                    console.error('   Farm UUID:', farm.uuid);
+                    console.error('   Geometry available:', !!farm.verifiedGeometry);
+                    return null;
+                  }
+                })}
+              </MapContainer>
+              <div className="p-4 bg-slate-50 border-t">
+                <div className="flex items-center gap-6 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-green-500 bg-opacity-50 border-2 border-green-600 rounded-sm"></div>
+                    <span className="text-slate-600">Verified Farms (QGIS Geometry)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-600">💾 Data from verified_geometry field</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* Recent Farms Section */}
         <div>
           <Card variant="default" className="p-0">
@@ -467,63 +629,63 @@ export default function AdminDashboard() {
                 <p className="text-sm text-slate-600 mt-1">Latest registrations awaiting verification</p>
               </div>
 
-            {loading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 rounded-lg">
-                    <div className="h-5 bg-slate-200 rounded animate-pulse mb-3"></div>
-                    <div className="flex gap-4">
-                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                      <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentFarms.length > 0 ? (
-              <div className="space-y-3">
-                {recentFarms.map((farm, idx) => (
-                  <div
-                    key={farm.uuid}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
-                      <div className="flex gap-4 mt-2 text-sm text-slate-600">
-                        <span>📐 {farm.farmArea} ha</span>
-                        <span>⛰️ {farm.elevation}m</span>
-                        <span>📅 {farm.plantingYear}</span>
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, idx) => (
+                    <div key={idx} className="p-4 bg-slate-50 rounded-lg">
+                      <div className="h-5 bg-slate-200 rounded animate-pulse mb-3"></div>
+                      <div className="flex gap-4">
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button 
-                        onClick={() => handleFarmAction(farm.uuid, 'approve')}
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 bg-green-100 text-green-700 hover:bg-green-200"
-                        title="Approve Farm"
-                      >
-                        ✓
-                      </Button>
-                      <Button 
-                        onClick={() => handleFarmAction(farm.uuid, 'reject')}
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 bg-red-100 text-red-700 hover:bg-red-200"
-                        title="Reject Farm"
-                      >
-                        ✗
-                      </Button>
-                      <Badge variant="pending">
-                        Pending
-                      </Badge>
+                  ))}
+                </div>
+              ) : recentFarms.length > 0 ? (
+                <div className="space-y-3">
+                  {recentFarms.map((farm, idx) => (
+                    <div
+                      key={farm.uuid}
+                      className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
+                        <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                          <span>📐 {farm.farmArea} ha</span>
+                          <span>⛰️ {farm.elevation}m</span>
+                          <span>📅 {farm.plantingYear}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          onClick={() => handleFarmAction(farm.uuid, 'approve')}
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 bg-green-100 text-green-700 hover:bg-green-200"
+                          title="Approve Farm"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          onClick={() => handleFarmAction(farm.uuid, 'reject')}
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 bg-red-100 text-red-700 hover:bg-red-200"
+                          title="Reject Farm"
+                        >
+                          ✗
+                        </Button>
+                        <Badge variant="pending">
+                          Pending
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-slate-600">No farms registered yet</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-600">No farms registered yet</p>
+              )}
             </div>
           </Card>
         </div>

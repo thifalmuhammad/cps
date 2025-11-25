@@ -455,33 +455,57 @@ const rejectFarm = async (req, res) => {
 // Get verified farms for map display
 const getVerifiedFarms = async (req, res) => {
   try {
-    const farms = await prisma.farm.findMany({
-      where: {
-        status: 'VERIFIED',
-        verifiedGeometry: {
-          not: null
-        }
-      },
+    console.log('\n📍 [getVerifiedFarms] Fetching verified farms...');
+
+    // Fetch ALL farms first (no WHERE filter)
+    const allFarms = await prisma.farm.findMany({
       include: {
         farmer: {
           select: {
-            name: true
+            uuid: true,
+            name: true,
+            email: true
           }
         },
         district: {
           select: {
-            districtName: true
+            uuid: true,
+            districtName: true,
+            districtCode: true
           }
         }
       }
     });
 
+    console.log(`✅ Fetched ${allFarms.length} total farms`);
+
+    // Filter by status in JavaScript (workaround for enum issue)
+    const verifiedFarms = allFarms.filter(
+      farm => farm.status === 'VERIFIED' && farm.verifiedGeometry
+    );
+
+    console.log(`✅ Found ${verifiedFarms.length} verified farms with geometry\n`);
+
+    // Debug: log first farm geometry if any
+    if (verifiedFarms.length > 0) {
+      console.log(`🔍 First farm geometry sample:`);
+      try {
+        const geom = JSON.parse(verifiedFarms[0].verifiedGeometry);
+        console.log(`   Type: ${geom.type}`);
+        console.log(`   Has features: ${geom.features ? 'yes' : 'no'}`);
+      } catch (e) {
+        console.log(`   Error parsing: ${e.message}`);
+      }
+    }
+
     res.json({
       success: true,
-      data: farms
+      message: `Found ${verifiedFarms.length} verified farms`,
+      count: verifiedFarms.length,
+      data: verifiedFarms
     });
   } catch (error) {
-    console.error('Get verified farms error:', error);
+    console.error('❌ Get verified farms error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
