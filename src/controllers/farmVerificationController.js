@@ -494,6 +494,5 @@ module.exports = {
   getPendingFarms,
   verifyFarm,
   rejectFarm,
-  getVerifiedFarms,
-  bulkVerifyFarms
+  getVerifiedFarms
 };

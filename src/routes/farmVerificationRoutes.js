@@ -4,8 +4,7 @@ const {
   getPendingFarms,
   verifyFarm,
   rejectFarm,
-  getVerifiedFarms,
-  bulkVerifyFarms
+  getVerifiedFarms
 } = require('../controllers/farmVerificationController');
 
 // Debug middleware
@@ -22,6 +21,5 @@ router.get('/farms/pending', getPendingFarms);
 router.get('/farms/verified', getVerifiedFarms);
 router.put('/farms/:uuid/verify', verifyFarm);
 router.put('/farms/:uuid/reject', rejectFarm);
-router.post('/farms/bulk-verify', bulkVerifyFarms); // Bulk upload FeatureCollection
 
 module.exports = router;

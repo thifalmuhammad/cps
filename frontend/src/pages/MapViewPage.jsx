@@ -181,6 +181,7 @@ export default function MapViewPage() {
                   />
                   {farms.map((farm) => {
                     try {
+                      console.info(farm.verifiedGeometry)
                       const geometry = parseGeometry(farm.verifiedGeometry);
                       if (!geometry) return null;
 
@@ -235,8 +236,8 @@ export default function MapViewPage() {
                     <div
                       key={farm.uuid}
                       className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedFarm?.uuid === farm.uuid
-                          ? 'bg-blue-50 border-blue-300 shadow-md'
-                          : 'bg-slate-50 hover:bg-slate-100 border-transparent hover:border-slate-200'
+                        ? 'bg-blue-50 border-blue-300 shadow-md'
+                        : 'bg-slate-50 hover:bg-slate-100 border-transparent hover:border-slate-200'
                         }`}
                       onClick={() => setSelectedFarm(farm)}
                     >

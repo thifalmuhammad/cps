@@ -9,8 +9,9 @@ import RegisterPage from './pages/RegisterPage';
 import FarmRegistrationPage from './pages/FarmRegistrationPage';
 import FarmManagementPage from './pages/FarmManagementPage';
 import FarmVerificationPage from './pages/FarmVerificationPage';
+import MapViewPage from './pages/MapViewPage';
 import DistrictManagementPage from './pages/DistrictManagementPage';
-import { BarChart3, MapPin, TreePine, UserPlus, Home, PlusCircle, CheckSquare } from 'lucide-react';
+import { BarChart3, MapPin, TreePine, UserPlus, Home, PlusCircle, CheckSquare, Map } from 'lucide-react';
 
 function AppContent() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ function AppContent() {
   // Admin navigation items dengan icons
   const adminNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'map-view', label: 'Farm Map', icon: Map },
     { id: 'verify-farms', label: 'Verify Farms', icon: CheckSquare },
     { id: 'manage-district', label: 'Districts', icon: MapPin },
     { id: 'manage-farm', label: 'Manage Farms', icon: TreePine },
@@ -42,7 +44,7 @@ function AppContent() {
     <div className="App flex min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} navItems={navItems} user={user} />
-      
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col ml-0 lg:ml-64 transition-all duration-300">
         {/* Page Content */}
@@ -50,6 +52,7 @@ function AppContent() {
           {currentPage === 'dashboard' && (user.isAdmin ? <AdminDashboard /> : <FarmerDashboard />)}
           {user.isAdmin && (
             <>
+              {currentPage === 'map-view' && <MapViewPage />}
               {currentPage === 'verify-farms' && <FarmVerificationPage />}
               {currentPage === 'manage-district' && <DistrictManagementPage />}
               {currentPage === 'manage-farm' && <FarmManagementPage />}
