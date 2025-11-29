@@ -85,9 +85,19 @@ export default function AdminDashboard() {
       const verifiedData = await verifiedResponse.json();
 
       console.log('✅ Verified farms received:', verifiedData);
+      console.log('📊 Verified farms count:', verifiedData.data?.length || 0);
 
       if (verifiedData.success) {
         console.log('📊 Verified farms count:', verifiedData.data?.length || 0);
+
+        // Debug: if no verified farms, show all farms info
+        if (!verifiedData.data || verifiedData.data.length === 0) {
+          console.warn('⚠️ No verified farms. All farms in system:');
+          allFarmsData.forEach((farm, idx) => {
+            console.log(`   ${idx + 1}. ${farm.district?.districtName} - Status: ${farm.status}, HasGeometry: ${!!farm.verifiedGeometry}`);
+          });
+        }
+
         setVerifiedFarms(verifiedData.data || []);
       } else {
         console.warn('⚠️ Verified farms fetch unsuccessful:', verifiedData.message || 'No data');
@@ -118,41 +128,6 @@ export default function AdminDashboard() {
 
     return () => clearInterval(interval);
   }, [loading, refreshing]);
-
-  const parseGeometry = (farm) => {
-    // Try verified geometry first (polygon)
-    if (farm.verifiedGeometry) {
-      try {
-        const geom = JSON.parse(farm.verifiedGeometry);
-        if (geom.type === 'Polygon' && geom.coordinates && geom.coordinates[0]) {
-          return {
-            type: 'polygon',
-            coordinates: geom.coordinates[0].map(coord => [coord[1], coord[0]])
-          };
-        }
-      } catch (e) {
-        console.error('Error parsing verified geometry:', e);
-      }
-    }
-
-    // Fallback to input coordinates (point)
-    if (farm.geomCoordinates || farm.inputCoordinates) {
-      try {
-        const coordStr = farm.geomCoordinates || farm.inputCoordinates;
-        const geom = JSON.parse(coordStr);
-        if (geom.type === 'Point' && geom.coordinates) {
-          return {
-            type: 'point',
-            coordinates: [geom.coordinates[1], geom.coordinates[0]]
-          };
-        }
-      } catch (e) {
-        console.error('Error parsing input coordinates:', e);
-      }
-    }
-
-    return null;
-  };
 
   // For verified farms section - parse geometry like MapViewPage does
   const parseVerifiedGeometry = (geomString) => {
@@ -262,12 +237,6 @@ export default function AdminDashboard() {
                 <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
-              <Button
-                onClick={downloadReport}
-                className="gap-2"
-              >
-                📊 Download Report
-              </Button>
             </div>
           </div>
         </div>
@@ -300,81 +269,24 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="px-8 py-8">
-        {/* Stats Grid - Highlighted Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Farms Card */}
-          <Card variant="elevated" className="p-0">
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600">Registered Farms</p>
-                  {loading ? (
-                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-3xl font-bold text-slate-900">{stats.farms}</p>
-                  )}
-                  <p className="text-xs text-slate-500">📈 +12% from last month</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-                  <span className="text-2xl">🌾</span>
-                </div>
-              </div>
-            </div>
-          </Card>
 
-          {/* Districts Card */}
-          <Card variant="elevated" className="p-0">
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600">Active Districts</p>
-                  {loading ? (
-                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-3xl font-bold text-slate-900">{stats.districts}</p>
-                  )}
-                  <p className="text-xs text-slate-500">📊 Full coverage</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-                  <span className="text-2xl">📍</span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Users Card */}
-          <Card variant="elevated" className="p-0">
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600">Total Users</p>
-                  {loading ? (
-                    <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-3xl font-bold text-slate-900">{stats.users}</p>
-                  )}
-                  <p className="text-xs text-slate-500">👥 Active accounts</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-                  <span className="text-2xl">👤</span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Content Grid - Main sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Map Section - Takes 2 columns */}
-          <div className="lg:col-span-2">
-            {!loading && (
-              <Card variant="default" className="p-0 overflow-hidden">
+        {/* Map and Info Cards Grid - 75% map, 25% cards */}
+        {!loading && (verifiedFarms.length > 0 || allFarms.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            {/* Verified Farms Map Section - Takes 3 columns (75%) */}
+            <div className="lg:col-span-3">
+              <Card variant="default" className="p-0 overflow-hidden h-full">
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">Farm Distribution Map</h2>
+                      <h2 className="text-lg font-semibold text-slate-900">
+                        📍 {verifiedFarms.length > 0 ? 'Verified Farms Location' : 'All Farms (Pending Verification)'}
+                      </h2>
                       <p className="text-sm text-slate-600 mt-1">
-                        {allFarms.length} farms registered
+                        {verifiedFarms.length > 0
+                          ? `${verifiedFarms.length} ${verifiedFarms.length === 1 ? 'farm' : 'farms'} with verified geometry`
+                          : `${allFarms.length} farm(s) registered (awaiting verification)`
+                        }
                       </p>
                     </div>
                     <Button
@@ -388,307 +300,252 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <MapContainer
-                  center={center}
-                  zoom={10}
-                  style={{ height: '350px', width: '100%' }}
+                  center={[2.5, 99.5]}
+                  zoom={9}
+                  style={{ height: '500px', width: '100%' }}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                   />
-                  {allFarms.map((farm) => {
-                    const geometry = parseGeometry(farm);
-                    if (!geometry) return null;
+                  {(verifiedFarms.length > 0 ? verifiedFarms : allFarms).map((farm) => {
+                    try {
+                      console.log(`🗺️ Processing farm for map: ${farm.uuid}`);
 
-                    const popupContent = (
-                      <div className="p-2">
-                        <h3 className="font-semibold text-sm mb-2">
-                          {farm.farmName || farm.district?.districtName || 'Farm'}
-                        </h3>
-                        <div className="space-y-1 text-xs">
-                          <p><span className="font-medium">Farmer:</span> {farm.farmer?.name}</p>
-                          <p><span className="font-medium">District:</span> {farm.district?.districtName}</p>
-                          <p><span className="font-medium">Area:</span> {farm.farmArea} ha</p>
-                          <p><span className="font-medium">Elevation:</span> {farm.elevation}m</p>
-                          <p><span className="font-medium">Status:</span> {farm.status || 'Registered'}</p>
-                        </div>
-                      </div>
-                    );
+                      // For verified farms, use verifiedGeometry
+                      if (verifiedFarms.length > 0) {
+                        console.log(`   Geometry string length: ${farm.verifiedGeometry?.length || 0}`);
 
-                    if (geometry.type === 'polygon') {
-                      const isVerified = farm.status === 'VERIFIED';
-                      return (
-                        <Polygon
-                          key={farm.uuid}
-                          positions={geometry.coordinates}
-                          pathOptions={{
-                            color: isVerified ? '#059669' : '#f59e0b',
-                            fillColor: isVerified ? '#10b981' : '#fbbf24',
-                            fillOpacity: 0.3,
-                            weight: 2
-                          }}
-                        >
-                          <Popup>{popupContent}</Popup>
-                        </Polygon>
-                      );
-                    } else {
-                      return (
-                        <Marker key={farm.uuid} position={geometry.coordinates}>
-                          <Popup>{popupContent}</Popup>
-                        </Marker>
-                      );
+                        const geometry = parseVerifiedGeometry(farm.verifiedGeometry);
+                        console.log(`   Parsed geometry type: ${geometry?.type || 'null'}`);
+
+                        if (!geometry) {
+                          console.warn(`   ⚠️ Geometry is null for farm ${farm.uuid}`);
+                          return null;
+                        }
+
+                        // Convert FeatureCollection to simple geometry if needed
+                        let displayGeometry = geometry;
+                        if (geometry.type === 'FeatureCollection' && geometry.features?.length > 0) {
+                          console.log(`   Converting FeatureCollection to geometry`);
+                          displayGeometry = geometry.features[0].geometry;
+                          console.log(`   Final geometry type: ${displayGeometry?.type || 'null'}`);
+                        }
+
+                        console.log(`   ✅ Ready to render with type: ${displayGeometry?.type}`);
+
+                        return (
+                          <GeoJSONLayer
+                            key={farm.uuid}
+                            data={displayGeometry}
+                            style={{
+                              color: '#059669',
+                              weight: 2,
+                              opacity: 0.8,
+                              fillColor: '#10b981',
+                              fillOpacity: 0.3
+                            }}
+                            onEachFeature={(feature, layer) => {
+                              layer.bindPopup(`
+                                <div class="p-3 min-w-48">
+                                  <h3 class="font-bold text-slate-900">${farm.farmer?.name || 'Unknown'}</h3>
+                                  <p class="text-sm text-slate-600">${farm.district?.districtName}</p>
+                                  <div class="grid grid-cols-2 gap-2 mt-2 text-xs text-slate-600">
+                                    <span>📐 ${farm.farmArea} ha</span>
+                                    <span>✓ Verified</span>
+                                  </div>
+                                </div>
+                              `);
+                            }}
+                          />
+                        );
+                      } else {
+                        // For all farms (pending), use inputCoordinates
+                        const coords = farm.inputCoordinates ?
+                          (() => {
+                            try {
+                              const geom = JSON.parse(farm.inputCoordinates);
+                              if (geom.type === 'Point' && geom.coordinates) {
+                                return [geom.coordinates[1], geom.coordinates[0]];
+                              }
+                            } catch (e) { }
+                            return null;
+                          })()
+                          : null;
+
+                        if (!coords) {
+                          console.warn(`   ⚠️ No coordinates for farm ${farm.uuid}`);
+                          return null;
+                        }
+
+                        return (
+                          <Marker key={farm.uuid} position={coords}>
+                            <Popup>
+                              <div className="p-3 min-w-48">
+                                <h3 className="font-bold text-slate-900">{farm.farmer?.name || 'Unknown'}</h3>
+                                <p className="text-sm text-slate-600">{farm.district?.districtName}</p>
+                                <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-slate-600">
+                                  <span>📐 {farm.farmArea} ha</span>
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${farm.status === 'PENDING_VERIFICATION' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {farm.status?.replace(/_/g, ' ') || 'Unknown'}
+                                  </span>
+                                </div>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      }
+                    } catch (e) {
+                      console.error('❌ Error rendering farm geometry:', e);
+                      console.error('   Farm UUID:', farm.uuid);
+                      console.error('   Geometry available:', !!farm.verifiedGeometry);
+                      return null;
                     }
                   })}
                 </MapContainer>
                 <div className="p-4 bg-slate-50 border-t">
                   <div className="flex items-center gap-6 text-xs">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-3 bg-green-500 bg-opacity-30 border-2 border-green-600 rounded-sm"></div>
-                      <span className="text-slate-600">Verified Farms</span>
+                      <div className={`w-4 h-3 rounded-sm border-2 ${verifiedFarms.length > 0
+                          ? 'bg-green-500 bg-opacity-50 border-green-600'
+                          : 'bg-yellow-500 bg-opacity-50 border-yellow-600'
+                        }`}></div>
+                      <span className="text-slate-600">
+                        {verifiedFarms.length > 0 ? 'Verified Farms (QGIS Geometry)' : 'All Farms (Pending - Input Coordinates)'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-3 bg-yellow-500 bg-opacity-30 border-2 border-yellow-600 rounded-sm"></div>
-                      <span className="text-slate-600">Pending Verification</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <span className="text-slate-600">Farm Locations</span>
+                      <span className="text-slate-600">💾 Data from {verifiedFarms.length > 0 ? 'verified_geometry' : 'input_coordinates'} field</span>
                     </div>
                   </div>
                 </div>
               </Card>
-            )}
-          </div>
-
-          {/* Quick Stats Sidebar */}
-          <div className="space-y-6">
-            {/* Productivity Card */}
-            <Card variant="default" className="p-0">
-              <div className="p-6">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600">Total Productivity</p>
-                  {loading ? (
-                    <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-2xl font-bold text-slate-900">{stats.productivities}</p>
-                  )}
-                  <p className="text-xs text-slate-500">records tracked</p>
-                </div>
-                <div className="mt-4 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <p className="text-xs font-medium text-slate-900">Active</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Warehouses Card */}
-            <Card variant="default" className="p-0">
-              <div className="p-6">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-600">Warehouses</p>
-                  {loading ? (
-                    <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
-                  ) : (
-                    <p className="text-2xl font-bold text-slate-900">{stats.warehouses}</p>
-                  )}
-                  <p className="text-xs text-slate-500">operational</p>
-                </div>
-                <div className="mt-4 pt-4">
-                  <Button variant="ghost" size="sm" className="h-auto p-0 text-xs font-medium text-slate-900 hover:text-slate-700">
-                    View Details →
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Debug Section - Show data status */}
-        {!loading && process.env.NODE_ENV === 'development' && (
-          <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-            <p><strong>🔍 Debug Info:</strong></p>
-            <p>• All farms: {allFarms.length}</p>
-            <p>• Verified farms loaded: {verifiedFarms.length}</p>
-            <p>• Recent farms: {recentFarms.length}</p>
-            {verifiedFarms.length > 0 && (
-              <p>• First verified farm: {verifiedFarms[0].uuid} - {verifiedFarms[0].farmer?.name}</p>
-            )}
-          </div>
-        )}
-
-        {/* Verified Farms Map Section */}
-        {!loading && verifiedFarms.length > 0 && (
-          <div className="mb-8">
-            <Card variant="default" className="p-0 overflow-hidden">
-              <div className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">📍 Verified Farms Location</h2>
-                    <p className="text-sm text-slate-600 mt-1">
-                      {verifiedFarms.length} {verifiedFarms.length === 1 ? 'farm' : 'farms'} with verified geometry
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => fetchData(true)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-600 hover:text-slate-900"
-                  >
-                    🔄 Update Map
-                  </Button>
-                </div>
-              </div>
-              <MapContainer
-                center={[2.5, 99.5]}
-                zoom={9}
-                style={{ height: '400px', width: '100%' }}
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; OpenStreetMap contributors'
-                />
-                {verifiedFarms.map((farm) => {
-                  try {
-                    console.log(`🗺️ Processing farm for map: ${farm.uuid}`);
-                    console.log(`   Geometry string length: ${farm.verifiedGeometry?.length || 0}`);
-
-                    const geometry = parseVerifiedGeometry(farm.verifiedGeometry);
-                    console.log(`   Parsed geometry type: ${geometry?.type || 'null'}`);
-
-                    if (!geometry) {
-                      console.warn(`   ⚠️ Geometry is null for farm ${farm.uuid}`);
-                      return null;
-                    }
-
-                    // Convert FeatureCollection to simple geometry if needed
-                    let displayGeometry = geometry;
-                    if (geometry.type === 'FeatureCollection' && geometry.features?.length > 0) {
-                      console.log(`   Converting FeatureCollection to geometry`);
-                      displayGeometry = geometry.features[0].geometry;
-                      console.log(`   Final geometry type: ${displayGeometry?.type || 'null'}`);
-                    }
-
-                    console.log(`   ✅ Ready to render with type: ${displayGeometry?.type}`);
-
-                    return (
-                      <GeoJSONLayer
-                        key={farm.uuid}
-                        data={displayGeometry}
-                        style={{
-                          color: '#059669',
-                          weight: 2,
-                          opacity: 0.8,
-                          fillColor: '#10b981',
-                          fillOpacity: 0.3
-                        }}
-                        onEachFeature={(feature, layer) => {
-                          layer.bindPopup(`
-                            <div class="p-3 min-w-48">
-                              <h3 class="font-bold text-slate-900">${farm.farmer?.name || 'Unknown'}</h3>
-                              <p class="text-sm text-slate-600">${farm.district?.districtName}</p>
-                              <div class="grid grid-cols-2 gap-2 mt-2 text-xs text-slate-600">
-                                <span>📐 ${farm.farmArea} ha</span>
-                                <span>✓ Verified</span>
-                              </div>
-                            </div>
-                          `);
-                        }}
-                      />
-                    );
-                  } catch (e) {
-                    console.error('❌ Error rendering farm geometry:', e);
-                    console.error('   Farm UUID:', farm.uuid);
-                    console.error('   Geometry available:', !!farm.verifiedGeometry);
-                    return null;
-                  }
-                })}
-              </MapContainer>
-              <div className="p-4 bg-slate-50 border-t">
-                <div className="flex items-center gap-6 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-3 bg-green-500 bg-opacity-50 border-2 border-green-600 rounded-sm"></div>
-                    <span className="text-slate-600">Verified Farms (QGIS Geometry)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-600">💾 Data from verified_geometry field</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Recent Farms Section */}
-        <div>
-          <Card variant="default" className="p-0">
-            <div className="p-6">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-slate-900">Recent Farm Registrations</h2>
-                <p className="text-sm text-slate-600 mt-1">Latest registrations awaiting verification</p>
-              </div>
-
-              {loading ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, idx) => (
-                    <div key={idx} className="p-4 bg-slate-50 rounded-lg">
-                      <div className="h-5 bg-slate-200 rounded animate-pulse mb-3"></div>
-                      <div className="flex gap-4">
-                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                        <div className="h-4 bg-slate-200 rounded animate-pulse w-16"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : recentFarms.length > 0 ? (
-                <div className="space-y-3">
-                  {recentFarms.map((farm, idx) => (
-                    <div
-                      key={farm.uuid}
-                      className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-slate-600">
-                          <span>📐 {farm.farmArea} ha</span>
-                          <span>⛰️ {farm.elevation}m</span>
-                          <span>📅 {farm.plantingYear}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          onClick={() => handleFarmAction(farm.uuid, 'approve')}
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 bg-green-100 text-green-700 hover:bg-green-200"
-                          title="Approve Farm"
-                        >
-                          ✓
-                        </Button>
-                        <Button
-                          onClick={() => handleFarmAction(farm.uuid, 'reject')}
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 bg-red-100 text-red-700 hover:bg-red-200"
-                          title="Reject Farm"
-                        >
-                          ✗
-                        </Button>
-                        <Badge variant="pending">
-                          Pending
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-600">No farms registered yet</p>
-              )}
             </div>
-          </Card>
-        </div>
+
+            {/* Info Cards Sidebar - Takes 1 column (25%) */}
+            <div className="space-y-6">
+              {/* Registered Farms Card */}
+              <Card variant="elevated" className="p-0">
+                <div className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-600">Registered Farms</p>
+                      {loading ? (
+                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                      ) : (
+                        <p className="text-3xl font-bold text-slate-900">{stats.farms}</p>
+                      )}
+                      <p className="text-xs text-slate-500">🌾 Total</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <span className="text-xl">🌾</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Active Districts Card */}
+              <Card variant="elevated" className="p-0">
+                <div className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-600">Active Districts</p>
+                      {loading ? (
+                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                      ) : (
+                        <p className="text-3xl font-bold text-slate-900">{stats.districts}</p>
+                      )}
+                      <p className="text-xs text-slate-500">📊 Coverage</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <span className="text-xl">📍</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Total Users Card */}
+              <Card variant="elevated" className="p-0">
+                <div className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-600">Total Users</p>
+                      {loading ? (
+                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
+                      ) : (
+                        <p className="text-3xl font-bold text-slate-900">{stats.users}</p>
+                      )}
+                      <p className="text-xs text-slate-500">👥 Accounts</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <span className="text-xl">👤</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Productivity Card */}
+              <Card variant="default" className="p-0">
+                <div className="p-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-600">Total Productivity</p>
+                    {loading ? (
+                      <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
+                    ) : (
+                      <p className="text-2xl font-bold text-slate-900">{stats.productivities}</p>
+                    )}
+                    <p className="text-xs text-slate-500">records tracked</p>
+                  </div>
+                  <div className="mt-4 pt-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <p className="text-xs font-medium text-slate-900">Active</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Warehouses Card */}
+              <Card variant="default" className="p-0">
+                <div className="p-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-600">Warehouses</p>
+                    {loading ? (
+                      <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
+                    ) : (
+                      <p className="text-2xl font-bold text-slate-900">{stats.warehouses}</p>
+                    )}
+                    <p className="text-xs text-slate-500">operational</p>
+                  </div>
+                  <div className="mt-4 pt-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                      <p className="text-xs font-medium text-slate-900">Active</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Verified Farms Count Card */}
+              <Card variant="default" className="p-0 bg-gradient-to-br from-green-50 to-green-100">
+                <div className="p-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-green-900">Verified Farms</p>
+                    <p className="text-3xl font-bold text-green-900">{verifiedFarms.length}</p>
+                    <p className="text-xs text-green-700">✓ With geometry</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-green-200">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-600"></div>
+                      <p className="text-xs font-medium text-green-900">Ready to display</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

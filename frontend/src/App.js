@@ -5,13 +5,14 @@ import Sidebar from './components/Sidebar';
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import FarmerDashboard from './pages/FarmerDashboard';
-import RegisterPage from './pages/RegisterPage';
 import FarmRegistrationPage from './pages/FarmRegistrationPage';
 import FarmManagementPage from './pages/FarmManagementPage';
 import FarmVerificationPage from './pages/FarmVerificationPage';
 import MapViewPage from './pages/MapViewPage';
 import DistrictManagementPage from './pages/DistrictManagementPage';
-import { BarChart3, MapPin, TreePine, UserPlus, Home, PlusCircle, CheckSquare, Map } from 'lucide-react';
+import ProductivityManagementPage from './pages/ProductivityManagementPage';
+import WarehouseInventoryPage from './pages/WarehouseInventoryPage';
+import { BarChart3, MapPin, TreePine, Home, PlusCircle, CheckSquare, Map, TrendingUp, Package } from 'lucide-react';
 
 function AppContent() {
   const { user } = useAuth();
@@ -29,13 +30,14 @@ function AppContent() {
     { id: 'verify-farms', label: 'Verify Farms', icon: CheckSquare },
     { id: 'manage-district', label: 'Districts', icon: MapPin },
     { id: 'manage-farm', label: 'Manage Farms', icon: TreePine },
-    { id: 'register-user', label: 'Register User', icon: UserPlus },
   ];
 
   // Farmer navigation items dengan icons
   const farmerNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'register-farm', label: 'Register Farm', icon: PlusCircle },
+    { id: 'productivity', label: 'Productivity', icon: TrendingUp },
+    { id: 'warehouse', label: 'Warehouse', icon: Package },
   ];
 
   const navItems = user.isAdmin ? adminNavItems : farmerNavItems;
@@ -56,12 +58,13 @@ function AppContent() {
               {currentPage === 'verify-farms' && <FarmVerificationPage />}
               {currentPage === 'manage-district' && <DistrictManagementPage />}
               {currentPage === 'manage-farm' && <FarmManagementPage />}
-              {currentPage === 'register-user' && <RegisterPage />}
             </>
           )}
           {!user.isAdmin && (
             <>
               {currentPage === 'register-farm' && <FarmRegistrationPage />}
+              {currentPage === 'productivity' && <ProductivityManagementPage />}
+              {currentPage === 'warehouse' && <WarehouseInventoryPage />}
             </>
           )}
         </main>
