@@ -312,7 +312,7 @@ export default function WarehouseInventoryPage() {
                 )}
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <Card variant="elevated">
                         <div className="flex justify-between items-start">
                             <div>
@@ -321,17 +321,6 @@ export default function WarehouseInventoryPage() {
                                 <p className="text-xs text-slate-500 mt-2">kg</p>
                             </div>
                             <span className="text-3xl">🌾</span>
-                        </div>
-                    </Card>
-
-                    <Card variant="elevated">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-sm font-medium text-slate-600">Stored</p>
-                                <p className="text-2xl font-bold text-slate-900 mt-2">{totalStored.toFixed(2)}</p>
-                                <p className="text-xs text-slate-500 mt-2">kg in warehouse</p>
-                            </div>
-                            <span className="text-3xl">📦</span>
                         </div>
                     </Card>
 
@@ -346,25 +335,25 @@ export default function WarehouseInventoryPage() {
                         </div>
                     </Card>
 
-                    <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
+                    <Card variant="elevated" className="bg-gradient-to-br from-orange-50 to-orange-100">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-medium text-green-900">Revenue from Sales</p>
-                                <p className="text-2xl font-bold text-green-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
-                                <p className="text-xs text-green-700 mt-2">from removed items</p>
+                                <p className="text-sm font-medium text-orange-900">Sold/Removed</p>
+                                <p className="text-2xl font-bold text-orange-900 mt-2">{totalRemoved.toFixed(2)}</p>
+                                <p className="text-xs text-orange-700 mt-2">kg out</p>
                             </div>
-                            <span className="text-3xl">💰</span>
+                            <span className="text-3xl">📤</span>
                         </div>
                     </Card>
 
                     <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-medium text-green-900">Sold/Removed</p>
-                                <p className="text-2xl font-bold text-green-900 mt-2">{totalRemoved.toFixed(2)}</p>
-                                <p className="text-xs text-green-700 mt-2">kg out</p>
+                                <p className="text-sm font-medium text-green-900">Revenue from Sales</p>
+                                <p className="text-2xl font-bold text-green-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
+                                <p className="text-xs text-green-700 mt-2">total earnings</p>
                             </div>
-                            <span className="text-3xl">✅</span>
+                            <span className="text-3xl">💰</span>
                         </div>
                     </Card>
                 </div>
@@ -372,30 +361,46 @@ export default function WarehouseInventoryPage() {
                 {/* Main Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Store New Harvest */}
-                    <div className="lg:col-span-1">
-                        <Card className="p-6 border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-white">
-                            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Package className="w-5 h-5" />
-                                Store Harvest
-                            </h2>
-                            <form onSubmit={handleStoreInventory} className="space-y-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-700 mb-1">Harvest Record *</label>
-                                    <select
-                                        value={inventoryForm.productivityId}
-                                        onChange={(e) => setInventoryForm({ ...inventoryForm, productivityId: e.target.value })}
-                                        disabled={editingInventoryId}
-                                        className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    >
-                                        <option value="">Select harvest...</option>
-                                        {productivityRecords.map(prod => (
-                                            <option key={prod.uuid} value={prod.uuid}>
-                                                {prod.farm?.district?.districtName} - {prod.productionAmount.toFixed(2)} kg
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                    {showInventoryForm && (
+                        <div className="lg:col-span-1">
+                            <Card className="p-6 border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-white">
+                                <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <Package className="w-5 h-5" />
+                                    Store Harvest
+                                </h2>
+                                <form onSubmit={handleStoreInventory} className="space-y-3">
+                                {productivityRecords.length === 0 ? (
+                                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p className="text-sm font-medium text-yellow-900 mb-2">⚠️ No Harvest Records</p>
+                                        <p className="text-xs text-yellow-800 mb-3">
+                                            You need to record your harvest data first before storing in warehouse.
+                                        </p>
+                                        <a
+                                            href="/productivity"
+                                            className="inline-block px-3 py-1.5 bg-yellow-600 text-white text-xs rounded-md hover:bg-yellow-700 transition-colors"
+                                        >
+                                            Go to Productivity Page →
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Harvest Record *</label>
+                                            <select
+                                                value={inventoryForm.productivityId}
+                                                onChange={(e) => setInventoryForm({ ...inventoryForm, productivityId: e.target.value })}
+                                                disabled={editingInventoryId}
+                                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                required
+                                            >
+                                                <option value="">Select harvest...</option>
+                                                {productivityRecords.map(prod => (
+                                                    <option key={prod.uuid} value={prod.uuid}>
+                                                        {prod.farm?.district?.districtName} - {prod.productionAmount.toFixed(2)} kg ({new Date(prod.harvestDate).toLocaleDateString('id-ID')})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
 
                                 <div>
                                     <label className="block text-xs font-medium text-slate-700 mb-1">Quantity (kg) *</label>
@@ -450,36 +455,39 @@ export default function WarehouseInventoryPage() {
                                     />
                                 </div>
 
-                                <div className="flex gap-2 pt-2">
-                                    <Button
-                                        type="submit"
-                                        disabled={saving}
-                                        size="sm"
-                                        className="flex-1"
-                                    >
-                                        📦 Store
-                                    </Button>
-                                    {editingInventoryId && (
-                                        <Button
-                                            type="button"
-                                            onClick={() => {
-                                                setEditingInventoryId(null);
-                                                setInventoryForm({ productivityId: '', quantityStored: '', storageLocation: '', dateStored: '', notes: '' });
-                                            }}
-                                            variant="outline"
-                                            size="sm"
-                                            className="flex-1"
-                                        >
-                                            ✖
-                                        </Button>
-                                    )}
-                                </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <Button
+                                                type="submit"
+                                                disabled={saving}
+                                                size="sm"
+                                                className="flex-1"
+                                            >
+                                                📦 Store
+                                            </Button>
+                                            {editingInventoryId && (
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setEditingInventoryId(null);
+                                                        setInventoryForm({ productivityId: '', quantityStored: '', storageLocation: '', dateStored: '', notes: '' });
+                                                    }}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1"
+                                                >
+                                                    ✖
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </form>
                         </Card>
-                    </div>
+                        </div>
+                    )}
 
                     {/* Inventory & Removal */}
-                    <div className="lg:col-span-2">
+                    <div className={showInventoryForm ? "lg:col-span-2" : "lg:col-span-3"}>
                         {/* Inventory List */}
                         <Card className="mb-6">
                             <div className="border-b border-slate-200 pb-4 mb-4">
@@ -566,7 +574,7 @@ export default function WarehouseInventoryPage() {
                                                         onClick={() => handleEditInventory(inv)}
                                                         variant="outline"
                                                         size="sm"
-                                                        disabled={saving || availableStock < inv.quantityStored}
+                                                        disabled={saving}
                                                         className="gap-2"
                                                     >
                                                         <Edit2 className="w-4 h-4" />

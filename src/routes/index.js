@@ -1,11 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const userRoutes = require('./userRoutes');
-const districtRoutes = require('./districtRoutes');
-const farmVerificationRoutes = require('./farmVerificationRoutes');
-const farmRoutes = require('./farmRoutes');
-const productivityRoutes = require('./productivityRoutes');
-const warehouseRoutes = require('./warehouseRoutes');
+
+// Import routes
+let userRoutes, districtRoutes, farmVerificationRoutes, farmRoutes, productivityRoutes, warehouseRoutes;
+
+try {
+  userRoutes = require('./userRoutes');
+  districtRoutes = require('./districtRoutes');
+  farmVerificationRoutes = require('./farmVerificationRoutes');
+  farmRoutes = require('./farmRoutes');
+  productivityRoutes = require('./productivityRoutes');
+  warehouseRoutes = require('./warehouseRoutes');
+  
+  console.log('✅ All routes loaded successfully');
+} catch (error) {
+  console.error('❌ Error loading routes:', error);
+  throw error;
+}
 
 // Use all routes
 // ⚠️ IMPORTANT: farmVerificationRoutes must come BEFORE farmRoutes

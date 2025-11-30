@@ -36,11 +36,22 @@ const apiRequest = async (url, options = {}) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        success: false,
-        message: `HTTP ${response.status}: ${response.statusText}`,
-      }));
-      throw new Error(errorData.message || `HTTP ${response.status}`);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        // If response is not JSON, create a default error object
+        errorData = {
+          success: false,
+          message: `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+      
+      // Create error with more details
+      const error = new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      error.status = response.status;
+      error.data = errorData;
+      throw error;
     }
 
     return await response.json();
@@ -58,6 +69,16 @@ const apiRequest = async (url, options = {}) => {
 export const userAPI = {
   register: async (data) => {
     return apiRequest(`${API_BASE_URL}/users/register`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  login: async (data) => {
+    if (!data || !data.email || !data.password) {
+      throw new Error('Email and password are required');
+    }
+    return apiRequest(`${API_BASE_URL}/users/login`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
