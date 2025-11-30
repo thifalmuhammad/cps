@@ -215,8 +215,8 @@ export const productivityAPI = {
 // Warehouse API
 export const warehouseAPI = {
   create: async (data) => {
-    if (!data || !data.warehouseName || !data.location) {
-      throw new Error('Warehouse name and location are required');
+    if (!data || !data.productivityId || !data.quantityStored || !data.storageLocation || !data.dateStored) {
+      throw new Error('Productivity ID, quantity stored, storage location, and date stored are required');
     }
     return apiRequest(`${API_BASE_URL}/warehouses`, {
       method: 'POST',
@@ -235,7 +235,6 @@ export const warehouseAPI = {
 
   update: async (uuid, data) => {
     if (!uuid) throw new Error('UUID is required');
-    if (!data) throw new Error('Update data is required');
     return apiRequest(`${API_BASE_URL}/warehouses/${uuid}`, {
       method: 'PUT',
       body: JSON.stringify(data),

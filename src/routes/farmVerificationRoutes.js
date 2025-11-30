@@ -7,8 +7,8 @@ const {
   getVerifiedFarms
 } = require('../controllers/farmVerificationController');
 
-// Debug middleware
-router.use((req, res, next) => {
+// Debug middleware - only for farm routes
+router.use('/farms', (req, res, next) => {
   console.log(`  🔹 [farmVerificationRoutes] ${req.method} ${req.path}`);
   if (req.method === 'PUT' || req.method === 'POST') {
     console.log(`     📦 Body:`, JSON.stringify(req.body).substring(0, 200));

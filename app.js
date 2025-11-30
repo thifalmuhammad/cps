@@ -80,7 +80,12 @@ app.use((req, res, next) => {
 });
 
 // 404 handler for API routes
-app.use('/api/*', notFound);
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return notFound(req, res, next);
+  }
+  next();
+});
 
 // Global error handler
 app.use(errorHandler);

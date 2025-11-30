@@ -203,9 +203,6 @@ const getPendingFarms = async (req, res) => {
             uuid: true
           }
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
       }
     });
 

@@ -4,26 +4,31 @@ const { v4: uuidv4 } = require('uuid');
 // Create Warehouse
 const createWarehouse = async (req, res) => {
   try {
-    const { warehouseName, location } = req.body;
+    const { productivityId, quantityStored, storageLocation, dateStored, notes } = req.body;
 
-    if (!warehouseName || !location) {
+    if (!productivityId || !quantityStored || !storageLocation || !dateStored) {
       return res.status(400).json({
         success: false,
-        message: 'Warehouse name and location are required',
+        message: 'Productivity ID, quantity stored, storage location, and date stored are required',
       });
     }
 
     const warehouse = await prisma.warehouse.create({
       data: {
         uuid: uuidv4(),
-        warehouseName,
-        location,
+        warehouseName: `Warehouse - ${storageLocation}`,
+        location: storageLocation,
+        productivityId,
+        quantityStored: parseFloat(quantityStored),
+        storageLocation,
+        dateStored: new Date(dateStored),
+        notes: notes || '',
       },
     });
 
     res.status(201).json({
       success: true,
-      message: 'Warehouse created successfully',
+      message: 'Warehouse inventory created successfully',
       data: warehouse,
     });
   } catch (error) {
@@ -87,19 +92,26 @@ const getWarehouseByUuid = async (req, res) => {
 const updateWarehouse = async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { warehouseName, location } = req.body;
+    const data = req.body;
 
     const warehouse = await prisma.warehouse.update({
       where: { uuid },
       data: {
-        ...(warehouseName && { warehouseName }),
-        ...(location && { location }),
+        ...(data.productivityId && { productivityId: data.productivityId }),
+        ...(data.quantityStored && { quantityStored: parseFloat(data.quantityStored) }),
+        ...(data.storageLocation && { storageLocation: data.storageLocation }),
+        ...(data.dateStored && { dateStored: new Date(data.dateStored) }),
+        ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.quantityRemoved !== undefined && { quantityRemoved: data.quantityRemoved ? parseFloat(data.quantityRemoved) : null }),
+        ...(data.removalReason && { removalReason: data.removalReason }),
+        ...(data.dateRemoved && { dateRemoved: new Date(data.dateRemoved) }),
+        ...(data.buyerInfo !== undefined && { buyerInfo: data.buyerInfo }),
       },
     });
 
     res.json({
       success: true,
-      message: 'Warehouse updated successfully',
+      message: 'Warehouse inventory updated successfully',
       data: warehouse,
     });
   } catch (error) {

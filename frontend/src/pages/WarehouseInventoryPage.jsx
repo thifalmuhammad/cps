@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import { Plus, Trash2, Edit2, Download, Package, TrendingDown, Calendar, MapPin } from 'lucide-react';
 
 export default function WarehouseInventoryPage() {
     const { user } = useAuth();
@@ -26,7 +27,6 @@ export default function WarehouseInventoryPage() {
     });
 
     const [showRemovalForm, setShowRemovalForm] = useState(false);
-    const [editingRemovalId, setEditingRemovalId] = useState(null);
     const [removalForm, setRemovalForm] = useState({
         inventoryId: '',
         quantityRemoved: '',
@@ -182,7 +182,6 @@ export default function WarehouseInventoryPage() {
                 dateRemoved: '',
                 buyerInfo: '',
             });
-            setEditingRemovalId(null);
             setShowRemovalForm(false);
 
             setTimeout(() => setSuccess(null), 3000);
@@ -231,6 +230,37 @@ export default function WarehouseInventoryPage() {
     const totalStored = warehouseInventory.reduce((sum, w) => sum + w.quantityStored, 0);
     const totalRemoved = warehouseInventory.reduce((sum, w) => sum + (w.quantityRemoved || 0), 0);
     const currentStock = totalStored - totalRemoved;
+    const totalRevenue = warehouseInventory.reduce((sum, w) => {
+        const prod = productivityRecords.find(p => p.uuid === w.productivityId);
+        return sum + ((w.quantityRemoved || 0) * (prod?.sellingPrice || 0));
+    }, 0);
+
+    // Export inventory as CSV
+    const handleExportInventory = () => {
+        const csvContent = [
+            ['Date Stored', 'Quantity Stored', 'Storage Location', 'Quantity Removed', 'Removal Reason', 'Date Removed', 'Buyer Info', 'Current Stock'],
+            ...warehouseInventory.map(w => [
+                new Date(w.dateStored).toLocaleDateString('id-ID'),
+                w.quantityStored.toFixed(2),
+                w.storageLocation,
+                w.quantityRemoved?.toFixed(2) || '0.00',
+                w.removalReason || '-',
+                w.dateRemoved ? new Date(w.dateRemoved).toLocaleDateString('id-ID') : '-',
+                w.buyerInfo || '-',
+                (w.quantityStored - (w.quantityRemoved || 0)).toFixed(2)
+            ])
+        ]
+            .map(row => row.map(cell => `"${cell}"`).join(','))
+            .join('\n');
+
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+        element.setAttribute('download', `warehouse_inventory_${new Date().toISOString().split('T')[0]}.csv`);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -241,6 +271,25 @@ export default function WarehouseInventoryPage() {
                         <div>
                             <h1 className="text-3xl font-bold text-slate-900">🏭 Warehouse Inventory</h1>
                             <p className="text-sm text-slate-600 mt-1">Track your harvested products and sales</p>
+                        </div>
+                        <div className="flex gap-2">
+                            {warehouseInventory.length > 0 && (
+                                <Button
+                                    onClick={handleExportInventory}
+                                    variant="outline"
+                                    className="gap-2"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Export
+                                </Button>
+                            )}
+                            <Button
+                                onClick={() => setShowInventoryForm(!showInventoryForm)}
+                                className="gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                {showInventoryForm ? 'Cancel' : 'Store Item'}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -300,6 +349,17 @@ export default function WarehouseInventoryPage() {
                     <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
                         <div className="flex justify-between items-start">
                             <div>
+                                <p className="text-sm font-medium text-green-900">Revenue from Sales</p>
+                                <p className="text-2xl font-bold text-green-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
+                                <p className="text-xs text-green-700 mt-2">from removed items</p>
+                            </div>
+                            <span className="text-3xl">💰</span>
+                        </div>
+                    </Card>
+
+                    <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
+                        <div className="flex justify-between items-start">
+                            <div>
                                 <p className="text-sm font-medium text-green-900">Sold/Removed</p>
                                 <p className="text-2xl font-bold text-green-900 mt-2">{totalRemoved.toFixed(2)}</p>
                                 <p className="text-xs text-green-700 mt-2">kg out</p>
@@ -313,8 +373,11 @@ export default function WarehouseInventoryPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Store New Harvest */}
                     <div className="lg:col-span-1">
-                        <Card className="p-6 border-2 border-blue-200 bg-blue-50">
-                            <h2 className="text-lg font-bold text-slate-900 mb-4">➕ Store Harvest</h2>
+                        <Card className="p-6 border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-white">
+                            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Package className="w-5 h-5" />
+                                Store Harvest
+                            </h2>
                             <form onSubmit={handleStoreInventory} className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-700 mb-1">Harvest Record *</label>
@@ -348,24 +411,30 @@ export default function WarehouseInventoryPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-700 mb-1">Location *</label>
+                                    <label className="block text-xs font-medium text-slate-700 mb-1 flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        Storage Location *
+                                    </label>
                                     <input
                                         type="text"
                                         value={inventoryForm.storageLocation}
                                         onChange={(e) => setInventoryForm({ ...inventoryForm, storageLocation: e.target.value })}
-                                        placeholder="e.g., Warehouse A - Shelf 3"
-                                        className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="e.g., Rack A-1"
+                                        className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-700 mb-1">Date Stored *</label>
+                                    <label className="block text-xs font-medium text-slate-700 mb-1 flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        Date Stored *
+                                    </label>
                                     <input
                                         type="date"
                                         value={inventoryForm.dateStored}
                                         onChange={(e) => setInventoryForm({ ...inventoryForm, dateStored: e.target.value })}
-                                        className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-2 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
                                         required
                                     />
                                 </div>
@@ -414,7 +483,10 @@ export default function WarehouseInventoryPage() {
                         {/* Inventory List */}
                         <Card className="mb-6">
                             <div className="border-b border-slate-200 pb-4 mb-4">
-                                <h2 className="text-lg font-bold text-slate-900">📦 Warehouse Inventory</h2>
+                                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <Package className="w-5 h-5" />
+                                    Warehouse Inventory
+                                </h2>
                                 <p className="text-sm text-slate-600 mt-1">{warehouseInventory.length} entries</p>
                             </div>
 
@@ -427,12 +499,16 @@ export default function WarehouseInventoryPage() {
                                         const removedPercentage = inv.quantityStored > 0 ? ((inv.quantityRemoved || 0) / inv.quantityStored * 100) : 0;
 
                                         return (
-                                            <div key={inv.uuid} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div key={inv.uuid} className="p-4 bg-gradient-to-r from-slate-50 to-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
                                                 <div className="flex items-start justify-between mb-2">
                                                     <div>
-                                                        <p className="font-semibold text-slate-900">📦 {inv.storageLocation}</p>
-                                                        <p className="text-xs text-slate-600 mt-1">
-                                                            📅 {new Date(inv.dateStored).toLocaleDateString('id-ID')}
+                                                        <p className="font-semibold text-slate-900 flex items-center gap-2">
+                                                            <MapPin className="w-4 h-4 text-slate-600" />
+                                                            {inv.storageLocation}
+                                                        </p>
+                                                        <p className="text-xs text-slate-600 mt-1 flex items-center gap-1">
+                                                            <Calendar className="w-3 h-3" />
+                                                            {new Date(inv.dateStored).toLocaleDateString('id-ID')}
                                                         </p>
                                                     </div>
                                                     <Badge variant={availableStock > 0 ? 'success' : 'secondary'}>
@@ -475,11 +551,15 @@ export default function WarehouseInventoryPage() {
                                                 <div className="flex gap-2 pt-2">
                                                     {availableStock > 0 && (
                                                         <Button
-                                                            onClick={() => setRemovalForm({ inventoryId: inv.uuid, quantityRemoved: '', removalReason: 'sold', dateRemoved: '', buyerInfo: '' }) || setShowRemovalForm(true)}
+                                                            onClick={() => {
+                                                                setRemovalForm({ inventoryId: inv.uuid, quantityRemoved: '', removalReason: 'sold', dateRemoved: '', buyerInfo: '' });
+                                                                setShowRemovalForm(true);
+                                                            }}
                                                             size="sm"
-                                                            className="flex-1"
+                                                            className="flex-1 gap-2"
                                                         >
-                                                            📤 Sell/Remove
+                                                            <TrendingDown className="w-4 h-4" />
+                                                            Sell/Remove
                                                         </Button>
                                                     )}
                                                     <Button
@@ -487,16 +567,19 @@ export default function WarehouseInventoryPage() {
                                                         variant="outline"
                                                         size="sm"
                                                         disabled={saving || availableStock < inv.quantityStored}
+                                                        className="gap-2"
                                                     >
-                                                        ✏️
+                                                        <Edit2 className="w-4 h-4" />
+                                                        Edit
                                                     </Button>
                                                     <Button
                                                         onClick={() => handleDeleteInventory(inv.uuid)}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="text-red-600 hover:text-red-700"
+                                                        className="gap-2 text-red-600 hover:text-red-700"
                                                     >
-                                                        🗑️
+                                                        <Trash2 className="w-4 h-4" />
+                                                        Delete
                                                     </Button>
                                                 </div>
                                             </div>
@@ -514,8 +597,11 @@ export default function WarehouseInventoryPage() {
 
                         {/* Sales/Removal Form */}
                         {showRemovalForm && (
-                            <Card className="p-6 border-2 border-green-200 bg-green-50">
-                                <h2 className="text-lg font-bold text-slate-900 mb-4">📤 Remove from Warehouse</h2>
+                            <Card className="p-6 border-2 border-slate-300 bg-gradient-to-br from-slate-50 to-white">
+                                <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <TrendingDown className="w-5 h-5" />
+                                    Remove from Warehouse
+                                </h2>
                                 <form onSubmit={handleRemoveInventory} className="space-y-3">
                                     <div>
                                         <label className="block text-xs font-medium text-slate-700 mb-1">Select Inventory *</label>

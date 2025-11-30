@@ -90,10 +90,22 @@ model Productivity {
 }
 
 model Warehouse {
-  uuid          String @id @default(uuid())
-  warehouseName String @map("warehouse_name")
-  location      String
+  uuid              String    @id @default(uuid())
+  warehouseName     String    @map("warehouse_name")
+  location          String
+  productivityId    String?   @map("productivity_id")
+  quantityStored    Float     @map("quantity_stored")
+  storageLocation   String    @map("storage_location")
+  dateStored        DateTime  @map("date_stored") @db.Date
+  notes             String?
+  quantityRemoved   Float?    @map("quantity_removed")
+  removalReason     String?   @map("removal_reason")
+  dateRemoved       DateTime? @map("date_removed") @db.Date
+  buyerInfo         String?   @map("buyer_info")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@schema("CPS")
   @@map("t_warehouse")
 }
+
