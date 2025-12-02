@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
 import L from 'leaflet';
+import { MapPin, TrendingUp, Home, User, Edit2, X, AlertTriangle } from 'lucide-react';
 import { farmAPI, productivityAPI, districtAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
@@ -213,9 +214,10 @@ export default function FarmerDashboard() {
             </div>
             <a
               href="#register-farm"
-              className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors text-center"
+              className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors text-center inline-flex items-center gap-2 justify-center"
             >
-              + Register Farm
+              <Home className="h-4 w-4" />
+              Register Farm
             </a>
           </div>
         </div>
@@ -239,15 +241,18 @@ export default function FarmerDashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-slate-900">Edit Farm</h2>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  <Edit2 className="h-6 w-6 text-slate-600" />
+                  Edit Farm
+                </h2>
                 <button
                   onClick={() => {
                     setShowEditForm(false);
                     setEditingFarm(null);
                   }}
-                  className="text-slate-600 hover:text-slate-900 text-2xl"
+                  className="text-slate-600 hover:text-slate-900"
                 >
-                  ×
+                  <X className="h-6 w-6" />
                 </button>
               </div>
               <form onSubmit={handleUpdateFarm} className="space-y-4">
@@ -320,9 +325,11 @@ export default function FarmerDashboard() {
               <div>
                 <p className="text-sm font-medium text-slate-600">My Farms</p>
                 <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalFarms}</p>
-                <p className="text-xs text-slate-500 mt-2">🌾 Registered</p>
+                <p className="text-xs text-slate-500 mt-2">Registered</p>
               </div>
-              <span className="text-4xl">🏡</span>
+              <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                <Home className="h-6 w-6 text-emerald-600" />
+              </div>
             </div>
           </Card>
 
@@ -332,9 +339,11 @@ export default function FarmerDashboard() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Total Area</p>
                 <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalArea}</p>
-                <p className="text-xs text-slate-500 mt-2">📐 hectares</p>
+                <p className="text-xs text-slate-500 mt-2">hectares</p>
               </div>
-              <span className="text-4xl">📊</span>
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <MapPin className="h-6 w-6 text-blue-600" />
+              </div>
             </div>
           </Card>
 
@@ -344,9 +353,11 @@ export default function FarmerDashboard() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Total Productivity</p>
                 <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalProductivity}</p>
-                <p className="text-xs text-slate-500 mt-2">📈 recorded</p>
+                <p className="text-xs text-slate-500 mt-2">recorded</p>
               </div>
-              <span className="text-4xl">📈</span>
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
             </div>
           </Card>
         </div>
@@ -360,8 +371,9 @@ export default function FarmerDashboard() {
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">
-                        📍 {verifiedFarms.length > 0 ? 'Your Verified Farms' : 'Your Farms (Pending)'}
+                      <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-slate-600" />
+                        {verifiedFarms.length > 0 ? 'Your Verified Farms' : 'Your Farms (Pending)'}
                       </h2>
                       <p className="text-sm text-slate-600 mt-1">
                         {verifiedFarms.length > 0

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polygon, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
 import L from 'leaflet';
+import { RefreshCw, MapPin, Users, Warehouse, TrendingUp, CheckCircle2, AlertCircle, Download } from 'lucide-react';
 import { farmAPI, districtAPI, userAPI, productivityAPI, warehouseAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
@@ -236,7 +237,7 @@ export default function AdminDashboard() {
                 variant="outline"
                 className="gap-2"
               >
-                <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
             </div>
@@ -250,7 +251,7 @@ export default function AdminDashboard() {
           <div className="bg-red-50 rounded-lg p-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <span className="text-red-600 text-lg">⚠️</span>
+                <AlertCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
                 <p className="text-red-900 font-medium">Error loading dashboard</p>
@@ -281,8 +282,9 @@ export default function AdminDashboard() {
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">
-                        📍 {verifiedFarms.length > 0 ? 'Verified Farms Location' : 'All Farms (Pending Verification)'}
+                      <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-slate-600" />
+                        {verifiedFarms.length > 0 ? 'Verified Farms Location' : 'All Farms (Pending Verification)'}
                       </h2>
                       <p className="text-sm text-slate-600 mt-1">
                         {verifiedFarms.length > 0
@@ -295,9 +297,10 @@ export default function AdminDashboard() {
                       onClick={() => fetchData(true)}
                       variant="ghost"
                       size="sm"
-                      className="text-slate-600 hover:text-slate-900"
+                      className="text-slate-600 hover:text-slate-900 gap-2"
                     >
-                      🔄 Update Map
+                      <RefreshCw className="h-4 w-4" />
+                      Update Map
                     </Button>
                   </div>
                 </div>
@@ -438,10 +441,10 @@ export default function AdminDashboard() {
                       ) : (
                         <p className="text-3xl font-bold text-slate-900">{stats.farms}</p>
                       )}
-                      <p className="text-xs text-slate-500">🌾 Total</p>
+                      <p className="text-xs text-slate-500">Total</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <span className="text-xl">🌾</span>
+                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-emerald-600" />
                     </div>
                   </div>
                 </div>
@@ -458,10 +461,10 @@ export default function AdminDashboard() {
                       ) : (
                         <p className="text-3xl font-bold text-slate-900">{stats.districts}</p>
                       )}
-                      <p className="text-xs text-slate-500">📊 Coverage</p>
+                      <p className="text-xs text-slate-500">Coverage</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <span className="text-xl">📍</span>
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-blue-600" />
                     </div>
                   </div>
                 </div>
@@ -478,10 +481,10 @@ export default function AdminDashboard() {
                       ) : (
                         <p className="text-3xl font-bold text-slate-900">{stats.users}</p>
                       )}
-                      <p className="text-xs text-slate-500">👥 Accounts</p>
+                      <p className="text-xs text-slate-500">Accounts</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <span className="text-xl">👤</span>
+                    <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-purple-600" />
                     </div>
                   </div>
                 </div>
@@ -501,7 +504,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mt-4 pt-4">
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <TrendingUp className="h-4 w-4 text-green-600" />
                       <p className="text-xs font-medium text-slate-900">Active</p>
                     </div>
                   </div>
@@ -522,7 +525,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="mt-4 pt-4">
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                      <Warehouse className="h-4 w-4 text-blue-600" />
                       <p className="text-xs font-medium text-slate-900">Active</p>
                     </div>
                   </div>
@@ -535,11 +538,11 @@ export default function AdminDashboard() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-green-900">Verified Farms</p>
                     <p className="text-3xl font-bold text-green-900">{verifiedFarms.length}</p>
-                    <p className="text-xs text-green-700">✓ With geometry</p>
+                    <p className="text-xs text-green-700">With geometry</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-green-200">
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-600"></div>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <p className="text-xs font-medium text-green-900">Ready to display</p>
                     </div>
                   </div>
@@ -553,7 +556,10 @@ export default function AdminDashboard() {
         <div className="mt-8">
           <Card variant="default" className="p-0">
             <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold text-slate-900">📋 Registered Farms</h2>
+              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-slate-600" />
+                Registered Farms
+              </h2>
               <p className="text-sm text-slate-600 mt-1">All farms registered by farmers with their verification status</p>
             </div>
             <div className="overflow-x-auto">
