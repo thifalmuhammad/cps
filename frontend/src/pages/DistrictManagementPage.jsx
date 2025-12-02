@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertTriangle, X } from 'lucide-react';
 import { districtAPI } from '../services/api';
 import Input from '../components/Input';
 import Card from '../components/Card';
