@@ -510,7 +510,9 @@ export default function FarmerDashboard() {
             )}
             {!loading && myFarms.length === 0 && (
               <Card variant="default" className="p-12 text-center">
-                <p className="text-4xl mb-4">🌾</p>
+                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <Home className="h-8 w-8 text-slate-400" />
+                </div>
                 <p className="text-slate-600 mb-2 font-medium">No farms registered yet</p>
                 <p className="text-sm text-slate-600">Your farms will appear on the map once you register them</p>
               </Card>
@@ -546,21 +548,27 @@ export default function FarmerDashboard() {
               </div>
               <div className="space-y-3">
                 <div className="flex gap-3">
-                  <span className="text-lg flex-shrink-0">1️⃣</span>
+                  <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-blue-600">1</span>
+                  </div>
                   <div>
                     <p className="text-xs font-medium text-slate-900">Register Your Farm</p>
                     <p className="text-xs text-slate-600 mt-1">Input farm details and location</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <span className="text-lg flex-shrink-0">2️⃣</span>
+                  <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-blue-600">2</span>
+                  </div>
                   <div>
                     <p className="text-xs font-medium text-slate-900">Admin Verification</p>
                     <p className="text-xs text-slate-600 mt-1">Wait for location mapping</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <span className="text-lg flex-shrink-0">3️⃣</span>
+                  <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-blue-600">3</span>
+                  </div>
                   <div>
                     <p className="text-xs font-medium text-slate-900">View on Map</p>
                     <p className="text-xs text-slate-600 mt-1">Your farm appears here</p>
@@ -576,7 +584,10 @@ export default function FarmerDashboard() {
           <div className="mb-6">
             <Card variant="default" className="border-red-200 bg-red-50">
               <div className="border-b border-red-200 pb-4 mb-4">
-                <h2 className="text-lg font-bold text-red-900">⚠️ Farms Requiring Update</h2>
+                <h2 className="text-lg font-bold text-red-900 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  Farms Requiring Update
+                </h2>
                 <p className="text-sm text-red-700 mt-1">These farms were rejected and need to be updated</p>
               </div>
               <div className="space-y-3">
@@ -615,9 +626,10 @@ export default function FarmerDashboard() {
                       <div className="mt-3 pt-3 border-t border-red-200">
                         <button
                           onClick={() => handleEditFarm(farm)}
-                          className="w-full px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors"
+                          className="w-full px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors inline-flex items-center justify-center gap-2"
                         >
-                          ✏️ Edit Farm
+                          <Edit2 className="h-4 w-4" />
+                          Edit Farm
                         </button>
                       </div>
                     )}
@@ -650,7 +662,10 @@ export default function FarmerDashboard() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
-                        <p className="text-xs text-slate-600 mt-1">🔗 Click to view on map</p>
+                        <p className="text-xs text-slate-600 mt-1 flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          Click to view on map
+                        </p>
                       </div>
                       <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
                         Active
@@ -678,13 +693,16 @@ export default function FarmerDashboard() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-4xl mb-4">🌾</p>
+                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <Home className="h-8 w-8 text-slate-400" />
+                </div>
                 <p className="text-slate-600 mb-4 font-medium">No farms registered yet</p>
                 <p className="text-sm text-slate-600 mb-6">Start by registering your first farm to begin tracking your production</p>
                 <a
                   href="#register-farm"
-                  className="inline-block px-6 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors"
                 >
+                  <Home className="h-4 w-4" />
                   Register Your First Farm
                 </a>
               </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { districtAPI } from '../services/api';
 import Input from '../components/Input';
 import Card from '../components/Card';
@@ -111,9 +112,19 @@ export default function DistrictManagementPage() {
               setEditingId(null);
               setFormData({ districtCode: '', districtName: '' });
             }}
-            className={`${showForm ? 'btn-secondary' : 'btn-primary'}`}
+            className={`${showForm ? 'btn-secondary' : 'btn-primary'} inline-flex items-center gap-2`}
           >
-            {showForm ? 'Cancel' : '+ Add New District'}
+            {showForm ? (
+              <>
+                <X className="h-4 w-4" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                Add New District
+              </>
+            )}
           </button>
         </div>
 
@@ -177,14 +188,16 @@ export default function DistrictManagementPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleEdit(district)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1"
                               >
+                                <Edit2 className="h-3 w-3" />
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDelete(district.uuid)}
-                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 inline-flex items-center gap-1"
                               >
+                                <Trash2 className="h-3 w-3" />
                                 Delete
                               </button>
                             </div>
