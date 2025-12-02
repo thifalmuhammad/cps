@@ -8,11 +8,10 @@ import FarmerDashboard from './pages/FarmerDashboard';
 import FarmRegistrationPage from './pages/FarmRegistrationPage';
 import FarmManagementPage from './pages/FarmManagementPage';
 import FarmVerificationPage from './pages/FarmVerificationPage';
-import MapViewPage from './pages/MapViewPage';
 import DistrictManagementPage from './pages/DistrictManagementPage';
 import ProductivityManagementPage from './pages/ProductivityManagementPage';
 import WarehouseInventoryPage from './pages/WarehouseInventoryPage';
-import { BarChart3, MapPin, TreePine, Home, PlusCircle, CheckSquare, Map, TrendingUp, Package } from 'lucide-react';
+import { LayoutDashboard, MapPin, Sprout, Home, Plus, CheckCircle, TrendingUp, Package } from 'lucide-react';
 
 function AppContent() {
   const { user } = useAuth();
@@ -25,17 +24,16 @@ function AppContent() {
 
   // Admin navigation items dengan icons
   const adminNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'map-view', label: 'Farm Map', icon: Map },
-    { id: 'verify-farms', label: 'Verify Farms', icon: CheckSquare },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'verify-farms', label: 'Verify Farms', icon: CheckCircle },
     { id: 'manage-district', label: 'Districts', icon: MapPin },
-    { id: 'manage-farm', label: 'Manage Farms', icon: TreePine },
+    { id: 'manage-farm', label: 'Manage Farms', icon: Sprout },
   ];
 
   // Farmer navigation items dengan icons
   const farmerNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'register-farm', label: 'Register Farm', icon: PlusCircle },
+    { id: 'register-farm', label: 'Register Farm', icon: Plus },
     { id: 'productivity', label: 'Productivity', icon: TrendingUp },
     { id: 'warehouse', label: 'Warehouse', icon: Package },
   ];
@@ -43,7 +41,7 @@ function AppContent() {
   const navItems = user.isAdmin ? adminNavItems : farmerNavItems;
 
   return (
-    <div className="App flex min-h-screen bg-slate-50">
+    <div className="App flex min-h-screen bg-neutral-50">
       {/* Sidebar */}
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} navItems={navItems} user={user} />
 
@@ -54,7 +52,6 @@ function AppContent() {
           {currentPage === 'dashboard' && (user.isAdmin ? <AdminDashboard /> : <FarmerDashboard />)}
           {user.isAdmin && (
             <>
-              {currentPage === 'map-view' && <MapViewPage />}
               {currentPage === 'verify-farms' && <FarmVerificationPage />}
               {currentPage === 'manage-district' && <DistrictManagementPage />}
               {currentPage === 'manage-farm' && <FarmManagementPage />}

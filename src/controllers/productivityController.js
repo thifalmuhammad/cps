@@ -13,14 +13,40 @@ const createProductivity = async (req, res) => {
       });
     }
 
+    // Validate numeric values are not negative
+    const parsedProductionAmount = parseFloat(productionAmount);
+    const parsedSellingPrice = parseFloat(sellingPrice);
+    const parsedProductivity = parseFloat(productivity);
+
+    if (isNaN(parsedProductionAmount) || parsedProductionAmount < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Production amount must be a positive number',
+      });
+    }
+
+    if (isNaN(parsedSellingPrice) || parsedSellingPrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selling price must be a positive number',
+      });
+    }
+
+    if (isNaN(parsedProductivity) || parsedProductivity < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Productivity must be a positive number',
+      });
+    }
+
     const record = await prisma.productivity.create({
       data: {
         uuid: uuidv4(),
         farmId,
         harvestDate: new Date(harvestDate),
-        productionAmount: parseFloat(productionAmount),
-        sellingPrice: parseFloat(sellingPrice),
-        productivity: parseFloat(productivity),
+        productionAmount: parsedProductionAmount,
+        sellingPrice: parsedSellingPrice,
+        productivity: parsedProductivity,
       },
       include: {
         farm: true,
@@ -112,14 +138,52 @@ const updateProductivity = async (req, res) => {
     const { uuid } = req.params;
     const { harvestDate, productionAmount, sellingPrice, productivity } = req.body;
 
+    const updateData = {};
+
+    // Validate and add harvestDate if provided
+    if (harvestDate) {
+      updateData.harvestDate = new Date(harvestDate);
+    }
+
+    // Validate and add productionAmount if provided
+    if (productionAmount !== undefined) {
+      const parsedProductionAmount = parseFloat(productionAmount);
+      if (isNaN(parsedProductionAmount) || parsedProductionAmount < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Production amount must be a positive number',
+        });
+      }
+      updateData.productionAmount = parsedProductionAmount;
+    }
+
+    // Validate and add sellingPrice if provided
+    if (sellingPrice !== undefined) {
+      const parsedSellingPrice = parseFloat(sellingPrice);
+      if (isNaN(parsedSellingPrice) || parsedSellingPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selling price must be a positive number',
+        });
+      }
+      updateData.sellingPrice = parsedSellingPrice;
+    }
+
+    // Validate and add productivity if provided
+    if (productivity !== undefined) {
+      const parsedProductivity = parseFloat(productivity);
+      if (isNaN(parsedProductivity) || parsedProductivity < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Productivity must be a positive number',
+        });
+      }
+      updateData.productivity = parsedProductivity;
+    }
+
     const record = await prisma.productivity.update({
       where: { uuid },
-      data: {
-        ...(harvestDate && { harvestDate: new Date(harvestDate) }),
-        ...(productionAmount && { productionAmount: parseFloat(productionAmount) }),
-        ...(sellingPrice && { sellingPrice: parseFloat(sellingPrice) }),
-        ...(productivity && { productivity: parseFloat(productivity) }),
-      },
+      data: updateData,
       include: {
         farm: true,
       },

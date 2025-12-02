@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 // Create Farm
 const createFarm = async (req, res) => {
   try {
-    const { districtId, farmArea, elevation, inputCoordinates, plantingYear } = req.body;
+    const { districtId, farmArea, elevation, plantingYear } = req.body;
 
     // For now, use a default farmer ID since we don't have auth middleware
     // In production, this should come from req.user.uuid after authentication
@@ -13,7 +13,33 @@ const createFarm = async (req, res) => {
     if (!districtId || !farmArea || !elevation || !plantingYear) {
       return res.status(400).json({
         success: false,
-        message: 'District, farm name, area, elevation, and planting year are required',
+        message: 'District, area, elevation, and planting year are required',
+      });
+    }
+
+    // Validate numeric values are not negative
+    const parsedFarmArea = parseFloat(farmArea);
+    const parsedElevation = parseFloat(elevation);
+    const parsedPlantingYear = parseInt(plantingYear);
+
+    if (isNaN(parsedFarmArea) || parsedFarmArea < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Farm area must be a positive number',
+      });
+    }
+
+    if (isNaN(parsedElevation) || parsedElevation < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Elevation must be a positive number',
+      });
+    }
+
+    if (isNaN(parsedPlantingYear) || parsedPlantingYear < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Planting year must be a positive number',
       });
     }
 
@@ -22,10 +48,9 @@ const createFarm = async (req, res) => {
         uuid: uuidv4(),
         farmerId,
         districtId,
-        farmArea: parseFloat(farmArea),
-        elevation: parseFloat(elevation),
-        inputCoordinates: inputCoordinates || null,
-        plantingYear: parseInt(plantingYear),
+        farmArea: parsedFarmArea,
+        elevation: parsedElevation,
+        plantingYear: parsedPlantingYear,
       },
       include: {
         farmer: true,
@@ -110,16 +135,59 @@ const getFarmByUuid = async (req, res) => {
 const updateFarm = async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { farmArea, elevation, verifiedGeometry, plantingYear } = req.body;
+    const { districtId, farmArea, elevation, verifiedGeometry, plantingYear } = req.body;
+
+    const updateData = {};
+
+    // Add districtId if provided
+    if (districtId) {
+      updateData.districtId = districtId;
+    }
+
+    // Validate and add farmArea if provided
+    if (farmArea !== undefined) {
+      const parsedFarmArea = parseFloat(farmArea);
+      if (isNaN(parsedFarmArea) || parsedFarmArea < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Farm area must be a positive number',
+        });
+      }
+      updateData.farmArea = parsedFarmArea;
+    }
+
+    // Validate and add elevation if provided
+    if (elevation !== undefined) {
+      const parsedElevation = parseFloat(elevation);
+      if (isNaN(parsedElevation) || parsedElevation < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Elevation must be a positive number',
+        });
+      }
+      updateData.elevation = parsedElevation;
+    }
+
+    // Validate and add plantingYear if provided
+    if (plantingYear !== undefined) {
+      const parsedPlantingYear = parseInt(plantingYear);
+      if (isNaN(parsedPlantingYear) || parsedPlantingYear < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Planting year must be a positive number',
+        });
+      }
+      updateData.plantingYear = parsedPlantingYear;
+    }
+
+    // Add verifiedGeometry if provided
+    if (verifiedGeometry) {
+      updateData.verifiedGeometry = verifiedGeometry;
+    }
 
     const farm = await prisma.farm.update({
       where: { uuid },
-      data: {
-        ...(farmArea && { farmArea: parseFloat(farmArea) }),
-        ...(elevation && { elevation: parseFloat(elevation) }),
-        ...(verifiedGeometry && { verifiedGeometry }),
-        ...(plantingYear && { plantingYear: parseInt(plantingYear) }),
-      },
+      data: updateData,
       include: {
         farmer: true,
         district: true,

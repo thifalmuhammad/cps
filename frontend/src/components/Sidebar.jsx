@@ -44,52 +44,44 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 z-50 h-screen bg-white shadow-sm transition-all duration-300 ease-in-out flex flex-col ${
+      <aside className={`fixed left-0 top-0 z-50 h-screen bg-white border-r border-neutral-200 transition-all duration-300 ease-in-out flex flex-col ${
         isOpen ? 'w-64' : 'w-16'
       } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         
         {/* Header */}
-        <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex h-14 items-center justify-between px-4 border-b border-neutral-200">
           {isOpen && (
-            <div className="flex items-center space-x-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-                <span className="text-sm font-bold">C</span>
+            <div className="flex items-center space-x-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-900 text-white">
+                <span className="text-xs font-bold">C</span>
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-slate-900">CPS</h1>
-                <p className="text-xs text-slate-500">Coffee Production</p>
+                <h1 className="text-sm font-semibold text-neutral-900">CPS</h1>
               </div>
             </div>
           )}
           
           {!isOpen && (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white mx-auto">
-              <span className="text-sm font-bold">C</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-900 text-white mx-auto">
+              <span className="text-xs font-bold">C</span>
             </div>
           )}
           
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="hidden lg:inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors"
+            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 transition-colors"
             aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isOpen ? (
-              <PanelLeftClose className="h-4 w-4" strokeWidth={2} />
+              <PanelLeftClose className="h-4 w-4" strokeWidth={1.5} />
             ) : (
-              <PanelLeftOpen className="h-4 w-4" strokeWidth={2} />
+              <PanelLeftOpen className="h-4 w-4" strokeWidth={1.5} />
             )}
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
-          {isOpen && (
-            <div className="mb-4">
-              <h2 className="mb-2 px-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Navigation
-              </h2>
-            </div>
-          )}
+        <nav className="flex-1 space-y-1 p-3">
           
           {navItems.map((item) => {
             const IconComponent = item.icon;
@@ -99,18 +91,18 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`group flex w-full items-center rounded-md px-2 py-2 text-sm font-medium transition-colors focus:outline-none ${
+                className={`group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 ${
                   isActive
-                    ? 'bg-slate-200 text-slate-900'
-                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                    ? 'bg-neutral-100 text-neutral-900'
+                    : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                 }`}
                 title={!isOpen ? item.label : undefined}
               >
                 <IconComponent 
-                  className={`h-5 w-5 flex-shrink-0 ${
+                  className={`h-4 w-4 flex-shrink-0 ${
                     isOpen ? 'mr-3' : 'mx-auto'
-                  } ${isActive ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`} 
-                  strokeWidth={2} 
+                  } ${isActive ? 'text-neutral-900' : 'text-neutral-500 group-hover:text-neutral-700'}`} 
+                  strokeWidth={1.5} 
                 />
                 {isOpen && (
                   <span className="truncate">{item.label}</span>
@@ -121,22 +113,22 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
         </nav>
 
         {/* User Section */}
-        <div className="p-4">
+        <div className="p-3 border-t border-neutral-200">
           {isOpen ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* User Info */}
-              <div className="flex items-center space-x-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
+              <div className="flex items-center space-x-2 rounded-md border border-neutral-200 bg-white p-2">
+                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white">
                   <span className="text-xs font-medium">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">
+                  <p className="text-xs font-medium text-neutral-900 truncate">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {user?.isAdmin ? 'Administrator' : 'Farmer'}
+                  <p className="text-xs text-neutral-500 truncate">
+                    {user?.isAdmin ? 'Admin' : 'Farmer'}
                   </p>
                 </div>
               </div>
@@ -144,9 +136,9 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="group flex w-full items-center rounded-md px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors"
+                className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 transition-colors"
               >
-                <LogOut className="mr-3 h-5 w-5 text-slate-500 group-hover:text-slate-700" strokeWidth={2} />
+                <LogOut className="mr-3 h-4 w-4 text-neutral-500 group-hover:text-neutral-700" strokeWidth={1.5} />
                 Sign out
               </button>
             </div>
@@ -154,7 +146,7 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
             <div className="space-y-2">
               {/* Collapsed User Avatar */}
               <div className="flex justify-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-white">
                   <span className="text-xs font-medium">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </span>
@@ -164,10 +156,10 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
               {/* Collapsed Logout */}
               <button
                 onClick={handleLogout}
-                className="group flex w-full items-center justify-center rounded-md px-2 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors"
+                className="group flex w-full items-center justify-center rounded-md px-2 py-2 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 transition-colors"
                 title="Sign out"
               >
-                <LogOut className="h-5 w-5" strokeWidth={2} />
+                <LogOut className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
           )}

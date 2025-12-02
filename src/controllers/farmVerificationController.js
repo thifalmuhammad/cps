@@ -311,6 +311,26 @@ const verifyFarm = async (req, res) => {
 
     console.log(`✅ Farm found. Current status: ${existingFarm.status}`);
 
+    // Validate adminUuid if provided
+    let validatedAdminUuid = adminUuid;
+    if (adminUuid) {
+      if (!validateUuid(adminUuid)) {
+        console.warn(`[verifyFarm] Invalid admin UUID: ${adminUuid}, setting to null`);
+        validatedAdminUuid = null;
+      } else {
+        // Verify admin exists in database
+        const adminExists = await prisma.user.findUnique({
+          where: { uuid: adminUuid },
+          select: { uuid: true }
+        });
+        
+        if (!adminExists) {
+          console.warn(`[verifyFarm] Admin UUID ${adminUuid} not found in database, setting to null`);
+          validatedAdminUuid = null;
+        }
+      }
+    }
+
     // Update farm with verified data
     const updatedFarm = await prisma.farm.update({
       where: { uuid },
@@ -319,7 +339,7 @@ const verifyFarm = async (req, res) => {
         verifiedGeometry: sanitizeString(verifiedGeometry),
         farmArea: farmArea ? parseFloat(farmArea) : existingFarm.farmArea,
         verifiedAt: new Date(),
-        verifiedBy: adminUuid,
+        verifiedBy: validatedAdminUuid, // Can be null if admin not authenticated or not found
         updatedAt: new Date()
       },
       include: {
@@ -371,7 +391,7 @@ const rejectFarm = async (req, res) => {
   try {
     const { uuid } = req.params;
     const { reason } = req.body;
-    const adminUuid = req.user?.uuid || 'system-admin';
+    let adminUuid = req.user?.uuid || null;
 
     if (!validateUuid(uuid)) {
       return res.status(400).json({
@@ -399,12 +419,31 @@ const rejectFarm = async (req, res) => {
       });
     }
 
+    // Validate adminUuid if provided
+    if (adminUuid) {
+      if (!validateUuid(adminUuid)) {
+        console.warn(`[rejectFarm] Invalid admin UUID: ${adminUuid}, setting to null`);
+        adminUuid = null;
+      } else {
+        // Verify admin exists in database
+        const adminExists = await prisma.user.findUnique({
+          where: { uuid: adminUuid },
+          select: { uuid: true }
+        });
+        
+        if (!adminExists) {
+          console.warn(`[rejectFarm] Admin UUID ${adminUuid} not found in database, setting to null`);
+          adminUuid = null;
+        }
+      }
+    }
+
     const updatedFarm = await prisma.farm.update({
       where: { uuid },
       data: {
         status: 'NEEDS_UPDATE',
         verifiedAt: new Date(),
-        verifiedBy: adminUuid,
+        verifiedBy: adminUuid, // Can be null if admin not authenticated or not found
         updatedAt: new Date()
       },
       include: {
