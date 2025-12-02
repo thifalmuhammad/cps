@@ -13,6 +13,8 @@ export default function DistrictManagementPage() {
     districtName: '',
   });
   const [message, setMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchDistricts();
@@ -66,13 +68,20 @@ export default function DistrictManagementPage() {
   };
 
   const handleDelete = async (uuid) => {
-    if (window.confirm('Are you sure?')) {
+    if (window.confirm('Are you sure you want to delete this district?')) {
       try {
         await districtAPI.delete(uuid);
         setMessage('District deleted successfully!');
         fetchDistricts();
+        setTimeout(() => setMessage(''), 3000);
       } catch (error) {
-        setMessage(`Error: ${error.message}`);
+        const errorMsg = error.response?.data?.message || error.message;
+        if (errorMsg.includes('referenced') || errorMsg.includes('Cannot delete')) {
+          setMessage('⚠️ Cannot delete this district! It is currently being used by one or more farms. Please remove or reassign those farms first.');
+        } else {
+          setMessage(`Error: ${errorMsg}`);
+        }
+        setTimeout(() => setMessage(''), 5000);
       }
     }
   };
@@ -137,34 +146,85 @@ export default function DistrictManagementPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {districts.map((district) => (
-            <Card key={district.uuid} className="p-4">
-              <h3 className="font-bold text-lg text-slate-900 mb-2">{district.districtName}</h3>
-              <p className="text-sm text-slate-600 mb-4">Code: {district.districtCode}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(district)}
-                  className="flex-1 btn-primary text-sm py-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(district.uuid)}
-                  className="flex-1 btn-danger text-sm py-2"
-                >
-                  Delete
-                </button>
+        <Card className="p-0">
+          <div className="overflow-x-auto">
+            {districts.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-slate-600">No districts yet. Create your first district!</p>
               </div>
-            </Card>
-          ))}
-        </div>
-
-        {districts.length === 0 && (
-          <Card className="text-center">
-            <p className="text-slate-600">No districts yet. Create your first district!</p>
-          </Card>
-        )}
+            ) : (
+              <>
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">District Code</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">District Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {districts
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((district) => (
+                        <tr key={district.uuid} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                            {district.districtCode}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                            {district.districtName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(district)}
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(district.uuid)}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                <div className="p-4 bg-slate-50 border-t">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-600">
+                      Total: {districts.length} district(s)
+                    </div>
+                    {districts.length > itemsPerPage && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-sm border rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-slate-600">
+                          Page {currentPage} of {Math.ceil(districts.length / itemsPerPage)}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(districts.length / itemsPerPage)))}
+                          disabled={currentPage === Math.ceil(districts.length / itemsPerPage)}
+                          className="px-3 py-1 text-sm border rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

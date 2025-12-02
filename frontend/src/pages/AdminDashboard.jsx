@@ -34,6 +34,8 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [center] = useState([-6.2088, 106.8456]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -546,6 +548,98 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Registered Farms Section */}
+        <div className="mt-8">
+          <Card variant="default" className="p-0">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold text-slate-900">📋 Registered Farms</h2>
+              <p className="text-sm text-slate-600 mt-1">All farms registered by farmers with their verification status</p>
+            </div>
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto"></div>
+                  <p className="text-slate-600 mt-4">Loading farms...</p>
+                </div>
+              ) : allFarms.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-slate-600">No farms registered yet</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Farmer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">District</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Area (ha)</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Registered</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {allFarms
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((farm) => (
+                      <tr key={farm.uuid} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-slate-900">{farm.farmer?.name || 'Unknown'}</div>
+                          <div className="text-xs text-slate-500">{farm.farmer?.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                          {farm.district?.districtName || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {farm.farmArea.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={farm.status === 'VERIFIED' ? 'success' : farm.status === 'PENDING_VERIFICATION' ? 'warning' : 'error'}>
+                            {farm.status?.replace(/_/g, ' ') || 'N/A'}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                          {new Date(farm.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="p-4 bg-slate-50 border-t">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Total: {allFarms.length} farm(s)
+                </div>
+                {allFarms.length > itemsPerPage && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-sm border rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-slate-600">
+                      Page {currentPage} of {Math.ceil(allFarms.length / itemsPerPage)}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(allFarms.length / itemsPerPage)))}
+                      disabled={currentPage === Math.ceil(allFarms.length / itemsPerPage)}
+                      className="px-3 py-1 text-sm border rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

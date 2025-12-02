@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
 import L from 'leaflet';
-import { farmAPI, productivityAPI } from '../services/api';
+import { farmAPI, productivityAPI, districtAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import Input from '../components/Input';
 import 'leaflet/dist/leaflet.css';
 
 // Fix leaflet marker icons
@@ -18,6 +19,7 @@ L.Icon.Default.mergeOptions({
 export default function FarmerDashboard() {
   const { user } = useAuth();
   const [myFarms, setMyFarms] = useState([]);
+  const [rejectedFarms, setRejectedFarms] = useState([]);
   const [verifiedFarms, setVerifiedFarms] = useState([]);
   const [stats, setStats] = useState({
     totalFarms: 0,
@@ -26,6 +28,16 @@ export default function FarmerDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingFarm, setEditingFarm] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [districts, setDistricts] = useState([]);
+  const [editFormData, setEditFormData] = useState({
+    districtId: '',
+    farmArea: '',
+    elevation: '',
+    plantingYear: ''
+  });
+  const [updateMessage, setUpdateMessage] = useState('');
   const [selectedFarmId, setSelectedFarmId] = useState(null);
   const mapRef = useRef(null);
 
@@ -37,15 +49,31 @@ export default function FarmerDashboard() {
 
         console.log('📡 Fetching farms for farmer:', user?.uuid);
 
-        const farmsRes = await farmAPI.getAll();
+        const [farmsRes, districtsRes] = await Promise.all([
+          farmAPI.getAll(),
+          districtAPI.getAll()
+        ]);
+        setDistricts(districtsRes.data || []);
         const allFarms = farmsRes.data || [];
 
         // Filter farms for current farmer
-        const myFarmsList = allFarms.filter(f => f.farmerId === user?.uuid);
+        const allMyFarms = allFarms.filter(f => f.farmerId === user?.uuid);
+        
+        // Separate active farms from rejected farms
+        const myFarmsList = allMyFarms.filter(f => 
+          f.status !== 'REJECTED' && 
+          f.status !== 'NEEDS_UPDATE'
+        );
+        
+        // Get rejected farms separately
+        const myRejectedFarms = allMyFarms.filter(f => 
+          f.status === 'REJECTED' || f.status === 'NEEDS_UPDATE'
+        );
         console.log('🌾 My farms count:', myFarmsList.length);
         console.log('📊 My farms:', myFarmsList.map(f => ({ uuid: f.uuid, status: f.status, hasVerified: !!f.verifiedGeometry, hasInput: !!f.inputCoordinates })));
 
         setMyFarms(myFarmsList);
+        setRejectedFarms(myRejectedFarms);
 
         // Separate verified farms from all farms
         const myVerifiedFarms = myFarmsList.filter(f => f.status === 'VERIFIED' && f.verifiedGeometry);
@@ -127,6 +155,39 @@ export default function FarmerDashboard() {
     }
   };
 
+  const handleEditFarm = (farm) => {
+    setEditingFarm(farm);
+    setEditFormData({
+      districtId: farm.districtId,
+      farmArea: farm.farmArea,
+      elevation: farm.elevation,
+      plantingYear: farm.plantingYear
+    });
+    setShowEditForm(true);
+    setUpdateMessage('');
+  };
+
+  const handleUpdateFarm = async (e) => {
+    e.preventDefault();
+    try {
+      await farmAPI.update(editingFarm.uuid, editFormData);
+      setUpdateMessage('Farm updated successfully! Waiting for admin verification.');
+      setShowEditForm(false);
+      setEditingFarm(null);
+      // Refresh data
+      const farmsRes = await farmAPI.getAll();
+      const allFarms = farmsRes.data || [];
+      const allMyFarms = allFarms.filter(f => f.farmerId === user?.uuid);
+      const myFarmsList = allMyFarms.filter(f => f.status !== 'REJECTED' && f.status !== 'NEEDS_UPDATE');
+      const myRejectedFarms = allMyFarms.filter(f => f.status === 'REJECTED' || f.status === 'NEEDS_UPDATE');
+      setMyFarms(myFarmsList);
+      setRejectedFarms(myRejectedFarms);
+      setTimeout(() => setUpdateMessage(''), 5000);
+    } catch (error) {
+      setUpdateMessage(`Error: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
   const getDateRange = () => {
     const today = new Date();
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -162,6 +223,95 @@ export default function FarmerDashboard() {
 
       {/* Main Content */}
       <div className="px-8 py-8">
+        {/* Update Message */}
+        {updateMessage && (
+          <div className={`mb-6 p-4 rounded-lg border ${
+            updateMessage.includes('Error') 
+              ? 'bg-red-50 border-red-200 text-red-700' 
+              : 'bg-green-50 border-green-200 text-green-700'
+          }`}>
+            {updateMessage}
+          </div>
+        )}
+
+        {/* Edit Form Modal */}
+        {showEditForm && editingFarm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-slate-900">Edit Farm</h2>
+                <button
+                  onClick={() => {
+                    setShowEditForm(false);
+                    setEditingFarm(null);
+                  }}
+                  className="text-slate-600 hover:text-slate-900 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleUpdateFarm} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">District</label>
+                  <select
+                    value={editFormData.districtId}
+                    onChange={(e) => setEditFormData({ ...editFormData, districtId: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select District</option>
+                    {districts.map((d) => (
+                      <option key={d.uuid} value={d.uuid}>
+                        {d.districtName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="Farm Area (hectares)"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.farmArea}
+                  onChange={(e) => setEditFormData({ ...editFormData, farmArea: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Elevation (meters)"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.elevation}
+                  onChange={(e) => setEditFormData({ ...editFormData, elevation: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Planting Year"
+                  type="number"
+                  value={editFormData.plantingYear}
+                  onChange={(e) => setEditFormData({ ...editFormData, plantingYear: e.target.value })}
+                  required
+                />
+                <div className="flex gap-2 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700"
+                  >
+                    Update Farm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingFarm(null);
+                    }}
+                    className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-md font-medium hover:bg-slate-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        )}
         {/* Stats Grid - Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Farms Card */}
@@ -408,6 +558,63 @@ export default function FarmerDashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Rejected Farms Section */}
+        {rejectedFarms.length > 0 && (
+          <div className="mb-6">
+            <Card variant="default" className="border-red-200 bg-red-50">
+              <div className="border-b border-red-200 pb-4 mb-4">
+                <h2 className="text-lg font-bold text-red-900">⚠️ Farms Requiring Update</h2>
+                <p className="text-sm text-red-700 mt-1">These farms were rejected and need to be updated</p>
+              </div>
+              <div className="space-y-3">
+                {rejectedFarms.map((farm) => (
+                  <div
+                    key={farm.uuid}
+                    className="p-4 bg-white rounded-lg border border-red-200"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">{farm.district?.districtName}</p>
+                        <p className="text-xs text-red-600 mt-1">Please update your farm information</p>
+                      </div>
+                      <span className="px-3 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">
+                        {farm.status === 'NEEDS_UPDATE' ? 'Needs Update' : 'Rejected'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-red-200">
+                      <div>
+                        <p className="text-xs text-slate-600 font-medium">Area</p>
+                        <p className="font-bold text-slate-900 mt-1">{farm.farmArea}</p>
+                        <p className="text-xs text-slate-600">hectares</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 font-medium">Elevation</p>
+                        <p className="font-bold text-slate-900 mt-1">{farm.elevation}</p>
+                        <p className="text-xs text-slate-600">meters</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 font-medium">Year Planted</p>
+                        <p className="font-bold text-slate-900 mt-1">{farm.plantingYear}</p>
+                        <p className="text-xs text-slate-600">year</p>
+                      </div>
+                    </div>
+                    {farm.status === 'NEEDS_UPDATE' && (
+                      <div className="mt-3 pt-3 border-t border-red-200">
+                        <button
+                          onClick={() => handleEditFarm(farm)}
+                          className="w-full px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors"
+                        >
+                          ✏️ Edit Farm
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Farms List Section */}
         <div>
