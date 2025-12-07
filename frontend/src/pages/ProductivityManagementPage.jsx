@@ -103,7 +103,22 @@ export default function ProductivityManagementPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        const newFormData = { ...formData, [name]: value };
+        
+        // Auto-calculate productivity when farmId or productionAmount changes
+        if (name === 'farmId' || name === 'productionAmount') {
+            const selectedFarm = myFarms.find(f => f.uuid === (name === 'farmId' ? value : formData.farmId));
+            const productionAmount = parseFloat(name === 'productionAmount' ? value : formData.productionAmount);
+            
+            if (selectedFarm && !isNaN(productionAmount) && productionAmount > 0) {
+                const productivity = (productionAmount / selectedFarm.farmArea).toFixed(2);
+                newFormData.productivity = productivity;
+            } else {
+                newFormData.productivity = '';
+            }
+        }
+        
+        setFormData(newFormData);
     };
 
     const handleSubmit = async (e) => {
@@ -255,7 +270,7 @@ export default function ProductivityManagementPage() {
                 <div className="px-8 py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-900">📊 Manage Productivity</h1>
+                            <h1 className="text-3xl font-bold text-slate-900">Manage Productivity</h1>
                             <p className="text-sm text-slate-600 mt-1">Record and track your harvest results</p>
                         </div>
                         <div className="flex gap-2">
@@ -436,19 +451,20 @@ export default function ProductivityManagementPage() {
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
                                         <TrendingUp className="w-4 h-4" />
-                                        Productivity (kg/ha) *
+                                        Productivity (kg/ha) * (Auto-calculated)
                                     </label>
                                     <input
                                         type="number"
                                         name="productivity"
                                         value={formData.productivity}
-                                        onChange={handleInputChange}
                                         placeholder="0.00"
                                         step="0.01"
                                         min="0"
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-100 cursor-not-allowed"
+                                        readOnly
                                         required
                                     />
+                                    <p className="text-xs text-slate-500 mt-1">Formula: Production Amount ÷ Farm Area</p>
                                 </div>
                             </div>
 

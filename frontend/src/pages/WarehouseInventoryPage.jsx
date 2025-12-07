@@ -269,7 +269,7 @@ export default function WarehouseInventoryPage() {
                 <div className="px-8 py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-900">🏭 Warehouse Inventory</h1>
+                            <h1 className="text-3xl font-bold text-slate-900">Warehouse Inventory</h1>
                             <p className="text-sm text-slate-600 mt-1">Track your harvested products and sales</p>
                         </div>
                         <div className="flex gap-2">
