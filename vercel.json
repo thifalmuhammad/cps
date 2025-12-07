@@ -1,16 +1,19 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": ".",
-  "framework": "express",
-  "env": {
-    "NODE_ENV": "production",
-    "CI": "false"
-  },
-  "functions": {
-    "app.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 60
+  "buildCommand": "npm install && npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/app.js",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/build/index.html"
     }
+  ],
+  "env": {
+    "NODE_ENV": "production"
   }
 }
