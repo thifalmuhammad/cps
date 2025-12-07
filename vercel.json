@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build:vercel",
-  "outputDirectory": ".",
+  "outputDirectory": "frontend/build",
   "framework": "express",
   "env": {
     "NODE_ENV": "production",
@@ -9,23 +9,18 @@
   },
   "functions": {
     "app.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18.x",
+      "maxDuration": 60
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/app.js"
-    }
-  ],
-  "routes": [
-    {
-      "src": "^/api/(.*)",
-      "dest": "/app.js"
     },
     {
-      "src": "^/(?!api)",
-      "dest": "/frontend/build/index.html"
+      "source": "/(.*)",
+      "destination": "/frontend/build/index.html"
     }
   ]
 }
