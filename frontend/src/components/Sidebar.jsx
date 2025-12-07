@@ -52,9 +52,7 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
         <div className="flex h-14 items-center justify-between px-4 border-b border-neutral-200">
           {isOpen && (
             <div className="flex items-center space-x-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-900 text-white">
-                <span className="text-xs font-bold">C</span>
-              </div>
+              <img src="/transparent_logo.png" alt="CPS Logo" className="h-10 w-10" />
               <div>
                 <h1 className="text-sm font-semibold text-neutral-900">CPS</h1>
               </div>
@@ -62,9 +60,7 @@ export default function Sidebar({ currentPage, setCurrentPage, navItems, user })
           )}
           
           {!isOpen && (
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-900 text-white mx-auto">
-              <span className="text-xs font-bold">C</span>
-            </div>
+            <img src="/transparent_logo.png" alt="CPS Logo" className="h-10 w-10 mx-auto" />
           )}
           
           <button

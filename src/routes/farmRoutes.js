@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { createFarm, getAllFarms, getFarmByUuid, getFarmsByDistrict, updateFarm, deleteFarm } = require('../controllers/farmController');
+const { createFarm, getAllFarms, getFarmByUuid, getFarmsByDistrict, getPendingFarms, updateFarm, deleteFarm } = require('../controllers/farmController');
 
 // Special routes (must come before :uuid routes)
 router.get('/districts/:districtId/farms', getFarmsByDistrict);
+router.get('/farms/pending', getPendingFarms);
 
 // Regular farm routes
 router.post('/farms', createFarm);

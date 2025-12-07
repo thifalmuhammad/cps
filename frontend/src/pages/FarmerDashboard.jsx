@@ -41,6 +41,7 @@ export default function FarmerDashboard({ setCurrentPage }) {
   const [updateMessage, setUpdateMessage] = useState('');
   const [selectedFarmId, setSelectedFarmId] = useState(null);
   const mapRef = useRef(null);
+  const layerRefs = useRef({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -145,14 +146,73 @@ export default function FarmerDashboard({ setCurrentPage }) {
   };
 
   const handleFarmClick = (farm) => {
-    // Try verified geometry first (verified farms), then input coordinates (pending farms)
+    setSelectedFarmId(farm.uuid);
+    
     const geometryString = farm.verifiedGeometry || farm.inputCoordinates;
-    const coords = geometryString ? parseCoordinates(geometryString) : null;
-
-    if (coords && mapRef.current) {
-      console.log(`🗺️ Navigating to farm: ${farm.district?.districtName} at`, coords);
-      mapRef.current.setView(coords, 15);
-      setSelectedFarmId(farm.uuid);
+    
+    if (!geometryString || !mapRef.current) return;
+    
+    try {
+      const geom = JSON.parse(geometryString);
+      let coords = null;
+      
+      // For verified geometry (Polygon/MultiPolygon)
+      if (farm.verifiedGeometry) {
+        let geometry = geom;
+        
+        // Extract geometry from FeatureCollection or Feature
+        if (geom.type === 'FeatureCollection' && geom.features?.[0]) {
+          geometry = geom.features[0].geometry;
+        } else if (geom.type === 'Feature') {
+          geometry = geom.geometry;
+        }
+        
+        // Get coordinates array
+        let coordinates = geometry.coordinates;
+        
+        // For Polygon: coordinates[0] is outer ring
+        // For MultiPolygon: coordinates[0][0] is first polygon's outer ring
+        if (geometry.type === 'MultiPolygon') {
+          coordinates = coordinates[0];
+        }
+        
+        if (coordinates && coordinates[0] && Array.isArray(coordinates[0])) {
+          const ring = coordinates[0];
+          const lngs = ring.map(c => c[0]).filter(v => !isNaN(v));
+          const lats = ring.map(c => c[1]).filter(v => !isNaN(v));
+          
+          if (lats.length > 0 && lngs.length > 0) {
+            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+            const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+            coords = [centerLat, centerLng];
+          }
+        }
+      } else {
+        // For input coordinates (Point)
+        if (geom.type === 'Point' && geom.coordinates && geom.coordinates.length === 2) {
+          const lng = parseFloat(geom.coordinates[0]);
+          const lat = parseFloat(geom.coordinates[1]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            coords = [lat, lng];
+          }
+        }
+      }
+      
+      if (coords && !isNaN(coords[0]) && !isNaN(coords[1])) {
+        console.log(`🗺️ Navigating to farm: ${farm.district?.districtName} at`, coords);
+        mapRef.current.setView(coords, 16);
+        
+        setTimeout(() => {
+          const layer = layerRefs.current[farm.uuid];
+          if (layer && layer.openPopup) {
+            layer.openPopup();
+          }
+        }, 300);
+      } else {
+        console.warn('Invalid coordinates for farm:', farm.uuid);
+      }
+    } catch (e) {
+      console.error('Error parsing coordinates:', e);
     }
   };
 
@@ -238,8 +298,9 @@ export default function FarmerDashboard({ setCurrentPage }) {
 
         {/* Edit Form Modal */}
         {showEditForm && editingFarm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 overflow-y-auto">
+            <div className="min-h-screen w-full flex items-center justify-center py-8">
+            <Card className="max-w-2xl w-full my-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                   <Edit2 className="h-6 w-6 text-slate-600" />
@@ -315,6 +376,7 @@ export default function FarmerDashboard({ setCurrentPage }) {
                 </div>
               </form>
             </Card>
+            </div>
           </div>
         )}
         {/* Stats Grid - Key Metrics */}
@@ -432,6 +494,7 @@ export default function FarmerDashboard({ setCurrentPage }) {
                               fillOpacity: 0.3
                             }}
                             onEachFeature={(feature, layer) => {
+                              layerRefs.current[farm.uuid] = layer;
                               layer.bindPopup(`
                                 <div class="p-3 min-w-48">
                                   <h3 class="font-bold text-slate-900">${farm.district?.districtName}</h3>
@@ -465,7 +528,13 @@ export default function FarmerDashboard({ setCurrentPage }) {
                         }
 
                         return (
-                          <Marker key={farm.uuid} position={coords}>
+                          <Marker 
+                            key={farm.uuid} 
+                            position={coords}
+                            ref={(ref) => {
+                              if (ref) layerRefs.current[farm.uuid] = ref;
+                            }}
+                          >
                             <Popup>
                               <div className="p-3 min-w-48">
                                 <h3 className="font-bold text-slate-900">{farm.district?.districtName}</h3>

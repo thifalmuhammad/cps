@@ -137,7 +137,25 @@ const updateFarm = async (req, res) => {
     const { uuid } = req.params;
     const { districtId, farmArea, elevation, verifiedGeometry, plantingYear } = req.body;
 
+    // Get current farm to check status
+    const currentFarm = await prisma.farm.findUnique({
+      where: { uuid }
+    });
+
+    if (!currentFarm) {
+      return res.status(404).json({
+        success: false,
+        message: 'Farm not found',
+      });
+    }
+
     const updateData = {};
+
+    // If farm was NEEDS_UPDATE or REJECTED and farmer is updating, change status to PENDING_VERIFICATION
+    if ((currentFarm.status === 'NEEDS_UPDATE' || currentFarm.status === 'REJECTED') && 
+        (districtId || farmArea || elevation || plantingYear)) {
+      updateData.status = 'PENDING_VERIFICATION';
+    }
 
     // Add districtId if provided
     if (districtId) {
@@ -241,6 +259,37 @@ const getFarmsByDistrict = async (req, res) => {
   }
 };
 
+// Get pending farms for verification
+const getPendingFarms = async (req, res) => {
+  try {
+    const farms = await prisma.farm.findMany({
+      where: {
+        status: 'PENDING_VERIFICATION'
+      },
+      include: {
+        farmer: { select: { uuid: true, name: true, email: true } },
+        district: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: farms,
+      count: farms.length
+    });
+  } catch (error) {
+    console.error('Get pending farms error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
 // Delete farm
 const deleteFarm = async (req, res) => {
   try {
@@ -269,6 +318,7 @@ module.exports = {
   getAllFarms,
   getFarmByUuid,
   getFarmsByDistrict,
+  getPendingFarms,
   updateFarm,
   deleteFarm,
 };

@@ -3,6 +3,7 @@ import './App.css';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Sidebar from './components/Sidebar';
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/LandingPage';
 import AdminDashboard from './pages/AdminDashboard';
 import FarmerDashboard from './pages/FarmerDashboard';
 import FarmRegistrationPage from './pages/FarmRegistrationPage';
@@ -17,10 +18,11 @@ import { LayoutDashboard, MapPin, Sprout, Home, Plus, CheckCircle, TrendingUp, P
 function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [showLogin, setShowLogin] = useState(false);
 
-  // If no user logged in, show login page
+  // If no user logged in, show landing page or login page
   if (!user) {
-    return <LoginPage />;
+    return showLogin ? <LoginPage /> : <LandingPage onLogin={() => setShowLogin(true)} />;
   }
 
   // Admin navigation items dengan icons
