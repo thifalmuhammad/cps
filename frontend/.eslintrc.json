@@ -1,0 +1,7 @@
+{
+  "extends": "react-app",
+  "rules": {
+    "no-unused-vars": process.env.CI === "true" ? "error" : "warn",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}
