@@ -1,19 +1,28 @@
 {
   "version": 2,
   "buildCommand": "npm install && npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/build",
-  "routes": [
+  "public": "frontend/build",
+  "functions": {
+    "api/handler.js": {
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/app.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+      "source": "/api/(.*)",
+      "destination": "/api/handler"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/build/index.html"
+      "source": "/(.*)",
+      "destination": "/frontend/build/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/build/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
+
+
