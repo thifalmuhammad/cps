@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm install && npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && cd frontend && npm install && npm run build",
-  "public": "frontend/build",
+  "outputDirectory": "frontend/build",
   "functions": {
     "api/handler.js": {
       "runtime": "nodejs20.x",
