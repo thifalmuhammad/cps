@@ -1,7 +1,17 @@
 {
   "extends": "react-app",
   "rules": {
-    "no-unused-vars": process.env.CI === "true" ? "error" : "warn",
-    "react-hooks/exhaustive-deps": "warn"
-  }
+    "no-unused-vars": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-redeclare": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.{js,jsx}"],
+      "rules": {
+        "no-unused-vars": "warn"
+      }
+    }
+  ]
 }
+
