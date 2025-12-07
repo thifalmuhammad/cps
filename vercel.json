@@ -3,7 +3,8 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "frontend/build",
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "CI": "false"
   },
   "routes": [
     {
