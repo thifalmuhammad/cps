@@ -10,7 +10,7 @@ const gracefulDisconnect = async () => {
     await prisma.$disconnect();
     console.log('Database disconnected successfully');
   } catch (error) {
-    console.error('Error disconnecting from database:', error);
+    console.error('Error disconnecting from database:', error); //error handling
   }
 };
 
