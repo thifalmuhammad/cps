@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
-import { Plus, Trash2, Edit2, Download, Package, TrendingDown, Calendar, MapPin } from 'lucide-react';
+import { Plus, Trash2, Edit2, Download, Package, TrendingDown, TrendingUp, Calendar, MapPin } from 'lucide-react';
 
 export default function WarehouseInventoryPage() {
     const { user } = useAuth();
@@ -263,7 +263,7 @@ export default function WarehouseInventoryPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-white">
             {/* Header Section */}
             <div className="bg-white border-b border-slate-200">
                 <div className="px-8 py-6">
@@ -320,40 +320,48 @@ export default function WarehouseInventoryPage() {
                                 <p className="text-2xl font-bold text-slate-900 mt-2">{totalHarvested.toFixed(2)}</p>
                                 <p className="text-xs text-slate-500 mt-2">kg</p>
                             </div>
-                            <span className="text-3xl">🌾</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <Package className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
-                    <Card variant="elevated" className="bg-gradient-to-br from-blue-50 to-blue-100">
+                    <Card variant="elevated">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-medium text-blue-900">Current Stock</p>
-                                <p className="text-2xl font-bold text-blue-900 mt-2">{currentStock.toFixed(2)}</p>
-                                <p className="text-xs text-blue-700 mt-2">kg available</p>
+                                <p className="text-sm font-medium text-slate-600">Current Stock</p>
+                                <p className="text-2xl font-bold text-slate-900 mt-2">{currentStock.toFixed(2)}</p>
+                                <p className="text-xs text-slate-500 mt-2">kg available</p>
                             </div>
-                            <span className="text-3xl">📊</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <Package className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
-                    <Card variant="elevated" className="bg-gradient-to-br from-orange-50 to-orange-100">
+                    <Card variant="elevated">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-medium text-orange-900">Sold/Removed</p>
-                                <p className="text-2xl font-bold text-orange-900 mt-2">{totalRemoved.toFixed(2)}</p>
-                                <p className="text-xs text-orange-700 mt-2">kg out</p>
+                                <p className="text-sm font-medium text-slate-600">Sold/Removed</p>
+                                <p className="text-2xl font-bold text-slate-900 mt-2">{totalRemoved.toFixed(2)}</p>
+                                <p className="text-xs text-slate-500 mt-2">kg out</p>
                             </div>
-                            <span className="text-3xl">📤</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <TrendingDown className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
-                    <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
+                    <Card variant="elevated">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-medium text-green-900">Revenue from Sales</p>
-                                <p className="text-2xl font-bold text-green-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
-                                <p className="text-xs text-green-700 mt-2">total earnings</p>
+                                <p className="text-sm font-medium text-slate-600">Revenue from Sales</p>
+                                <p className="text-2xl font-bold text-slate-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
+                                <p className="text-xs text-slate-500 mt-2">total earnings</p>
                             </div>
-                            <span className="text-3xl">💰</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
                 </div>

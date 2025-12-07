@@ -273,12 +273,13 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="px-8 py-8">
 
-        {/* Map and Info Cards Grid - 75% map, 25% cards */}
+        {/* Map and Info Cards Grid */}
         {!loading && (verifiedFarms.length > 0 || allFarms.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            {/* Verified Farms Map Section - Takes 3 columns (75%) */}
-            <div className="lg:col-span-3">
-              <Card variant="default" className="p-0 overflow-hidden h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Left Column: Map + Verified Farms Card */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Map Card */}
+              <Card variant="default" className="p-0 overflow-hidden">
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -310,8 +311,8 @@ export default function AdminDashboard() {
                   style={{ height: '500px', width: '100%' }}
                 >
                   <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; OpenStreetMap contributors'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
                   />
                   {(verifiedFarms.length > 0 ? verifiedFarms : allFarms).map((farm) => {
                     try {
@@ -426,128 +427,108 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </Card>
+
+              {/* Verified Farms Card - Below Map */}
+              <Card variant="elevated" className="bg-gradient-to-br from-green-50 to-green-100">
+                <div className="p-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">Verified Farms</p>
+                      <p className="text-3xl font-bold text-green-900 mt-2">{verifiedFarms.length}</p>
+                      <p className="text-xs text-green-700 mt-1">Farms with verified geometry data</p>
+                    </div>
+                    <div className="h-14 w-14 rounded-full bg-green-200 flex items-center justify-center">
+                      <CheckCircle2 className="h-7 w-7 text-green-700" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
             </div>
 
-            {/* Info Cards Sidebar - Takes 1 column (25%) */}
-            <div className="space-y-6">
+            {/* Right Sidebar: Info Cards */}
+            <div className="space-y-4">
+
               {/* Registered Farms Card */}
-              <Card variant="elevated" className="p-0">
-                <div className="p-6">
+              <Card variant="elevated">
+                <div className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-slate-600">Registered Farms</p>
-                      {loading ? (
-                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                      ) : (
-                        <p className="text-3xl font-bold text-slate-900">{stats.farms}</p>
-                      )}
-                      <p className="text-xs text-slate-500">Total</p>
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Total Farms</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-2">{stats.farms}</p>
+                      <p className="text-xs text-slate-500 mt-1">Registered</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <MapPin className="h-5 w-5 text-emerald-600" />
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-slate-900" />
                     </div>
                   </div>
                 </div>
               </Card>
 
-              {/* Active Districts Card */}
-              <Card variant="elevated" className="p-0">
-                <div className="p-6">
+              {/* Districts Card */}
+              <Card variant="elevated">
+                <div className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-slate-600">Active Districts</p>
-                      {loading ? (
-                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                      ) : (
-                        <p className="text-3xl font-bold text-slate-900">{stats.districts}</p>
-                      )}
-                      <p className="text-xs text-slate-500">Coverage</p>
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Districts</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-2">{stats.districts}</p>
+                      <p className="text-xs text-slate-500 mt-1">Coverage</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <MapPin className="h-5 w-5 text-blue-600" />
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-slate-900" />
                     </div>
                   </div>
                 </div>
               </Card>
 
-              {/* Total Users Card */}
-              <Card variant="elevated" className="p-0">
-                <div className="p-6">
+              {/* Users Card */}
+              <Card variant="elevated">
+                <div className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-slate-600">Total Users</p>
-                      {loading ? (
-                        <div className="h-8 w-20 bg-slate-200 rounded animate-pulse"></div>
-                      ) : (
-                        <p className="text-3xl font-bold text-slate-900">{stats.users}</p>
-                      )}
-                      <p className="text-xs text-slate-500">Accounts</p>
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Users</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-2">{stats.users}</p>
+                      <p className="text-xs text-slate-500 mt-1">Accounts</p>
                     </div>
-                    <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-purple-600" />
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-slate-900" />
                     </div>
                   </div>
                 </div>
               </Card>
 
               {/* Productivity Card */}
-              <Card variant="default" className="p-0">
-                <div className="p-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-600">Total Productivity</p>
-                    {loading ? (
-                      <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
-                    ) : (
-                      <p className="text-2xl font-bold text-slate-900">{stats.productivities}</p>
-                    )}
-                    <p className="text-xs text-slate-500">records tracked</p>
-                  </div>
-                  <div className="mt-4 pt-4">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                      <p className="text-xs font-medium text-slate-900">Active</p>
+              <Card variant="elevated">
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Productivity</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-2">{stats.productivities}</p>
+                      <p className="text-xs text-slate-500 mt-1">Records</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-slate-900" />
                     </div>
                   </div>
                 </div>
               </Card>
 
               {/* Warehouses Card */}
-              <Card variant="default" className="p-0">
-                <div className="p-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-600">Warehouses</p>
-                    {loading ? (
-                      <div className="h-8 w-16 bg-slate-200 rounded animate-pulse"></div>
-                    ) : (
-                      <p className="text-2xl font-bold text-slate-900">{stats.warehouses}</p>
-                    )}
-                    <p className="text-xs text-slate-500">operational</p>
-                  </div>
-                  <div className="mt-4 pt-4">
-                    <div className="flex items-center gap-2">
-                      <Warehouse className="h-4 w-4 text-blue-600" />
-                      <p className="text-xs font-medium text-slate-900">Active</p>
+              <Card variant="elevated">
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Warehouses</p>
+                      <p className="text-2xl font-bold text-slate-900 mt-2">{stats.warehouses}</p>
+                      <p className="text-xs text-slate-500 mt-1">Operational</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <Warehouse className="h-5 w-5 text-slate-900" />
                     </div>
                   </div>
                 </div>
               </Card>
 
-              {/* Verified Farms Count Card */}
-              <Card variant="default" className="p-0 bg-gradient-to-br from-green-50 to-green-100">
-                <div className="p-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-green-900">Verified Farms</p>
-                    <p className="text-3xl font-bold text-green-900">{verifiedFarms.length}</p>
-                    <p className="text-xs text-green-700">With geometry</p>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-green-200">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <p className="text-xs font-medium text-green-900">Ready to display</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+
             </div>
           </div>
         )}

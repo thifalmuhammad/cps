@@ -249,7 +249,7 @@ export default function ProductivityManagementPage() {
         : 0;
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-white">
             {/* Header Section */}
             <div className="bg-white border-b border-slate-200">
                 <div className="px-8 py-6">
@@ -306,7 +306,9 @@ export default function ProductivityManagementPage() {
                                 <p className="text-3xl font-bold text-slate-900 mt-2">{totalProduction.toFixed(2)}</p>
                                 <p className="text-xs text-slate-500 mt-2">kg harvested</p>
                             </div>
-                            <span className="text-4xl">🌾</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
@@ -317,7 +319,9 @@ export default function ProductivityManagementPage() {
                                 <p className="text-3xl font-bold text-slate-900 mt-2">Rp {(totalRevenue / 1000000).toFixed(2)}M</p>
                                 <p className="text-xs text-slate-500 mt-2">from sales</p>
                             </div>
-                            <span className="text-4xl">💰</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <DollarSign className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
@@ -328,7 +332,9 @@ export default function ProductivityManagementPage() {
                                 <p className="text-3xl font-bold text-slate-900 mt-2">{avgProductivity}</p>
                                 <p className="text-xs text-slate-500 mt-2">kg/ha</p>
                             </div>
-                            <span className="text-4xl">📈</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
 
@@ -339,7 +345,9 @@ export default function ProductivityManagementPage() {
                                 <p className="text-3xl font-bold text-slate-900 mt-2">Rp {parseFloat(avgPrice).toLocaleString('id-ID')}</p>
                                 <p className="text-xs text-slate-500 mt-2">per kg</p>
                             </div>
-                            <span className="text-4xl">💹</span>
+                            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                                <DollarSign className="h-6 w-6 text-slate-900" />
+                            </div>
                         </div>
                     </Card>
                 </div>

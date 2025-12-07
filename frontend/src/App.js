@@ -11,7 +11,8 @@ import FarmVerificationPage from './pages/FarmVerificationPage';
 import DistrictManagementPage from './pages/DistrictManagementPage';
 import ProductivityManagementPage from './pages/ProductivityManagementPage';
 import WarehouseInventoryPage from './pages/WarehouseInventoryPage';
-import { LayoutDashboard, MapPin, Sprout, Home, Plus, CheckCircle, TrendingUp, Package } from 'lucide-react';
+import WeatherPage from './pages/WeatherPage';
+import { LayoutDashboard, MapPin, Sprout, Home, Plus, CheckCircle, TrendingUp, Package, Cloud } from 'lucide-react';
 
 function AppContent() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ function AppContent() {
     { id: 'register-farm', label: 'Register Farm', icon: Plus },
     { id: 'productivity', label: 'Productivity', icon: TrendingUp },
     { id: 'warehouse', label: 'Warehouse', icon: Package },
+    { id: 'weather', label: 'Weather', icon: Cloud },
   ];
 
   const navItems = user.isAdmin ? adminNavItems : farmerNavItems;
@@ -49,7 +51,7 @@ function AppContent() {
       <div className="flex-1 flex flex-col ml-0 lg:ml-64 transition-all duration-300">
         {/* Page Content */}
         <main className="flex-1">
-          {currentPage === 'dashboard' && (user.isAdmin ? <AdminDashboard /> : <FarmerDashboard />)}
+          {currentPage === 'dashboard' && (user.isAdmin ? <AdminDashboard /> : <FarmerDashboard setCurrentPage={setCurrentPage} />)}
           {user.isAdmin && (
             <>
               {currentPage === 'verify-farms' && <FarmVerificationPage />}
@@ -62,6 +64,7 @@ function AppContent() {
               {currentPage === 'register-farm' && <FarmRegistrationPage />}
               {currentPage === 'productivity' && <ProductivityManagementPage />}
               {currentPage === 'warehouse' && <WarehouseInventoryPage />}
+              {currentPage === 'weather' && <WeatherPage />}
             </>
           )}
         </main>
