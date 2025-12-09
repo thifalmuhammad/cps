@@ -51,6 +51,7 @@ const createFarm = async (req, res) => {
         farmArea: parsedFarmArea,
         elevation: parsedElevation,
         plantingYear: parsedPlantingYear,
+        status: 'PENDING_VERIFICATION',
       },
       include: {
         farmer: true,

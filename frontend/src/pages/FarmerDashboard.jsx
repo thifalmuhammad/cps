@@ -61,7 +61,7 @@ export default function FarmerDashboard({ setCurrentPage }) {
         // Filter farms for current farmer
         const allMyFarms = allFarms.filter(f => f.farmerId === user?.uuid);
         
-        // Separate active farms from rejected farms
+        // Show all farms except rejected/needs_update
         const myFarmsList = allMyFarms.filter(f => 
           f.status !== 'REJECTED' && 
           f.status !== 'NEEDS_UPDATE'
@@ -736,8 +736,14 @@ export default function FarmerDashboard({ setCurrentPage }) {
                           Click to view on map
                         </p>
                       </div>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
-                        Active
+                      <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                        farm.status === 'VERIFIED' 
+                          ? 'bg-green-100 text-green-800' 
+                          : farm.status === 'PENDING_VERIFICATION'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-slate-100 text-slate-800'
+                      }`}>
+                        {farm.status === 'VERIFIED' ? 'Verified' : farm.status === 'PENDING_VERIFICATION' ? 'Pending' : farm.status?.replace(/_/g, ' ')}
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-4 pt-3 border-t border-slate-200">

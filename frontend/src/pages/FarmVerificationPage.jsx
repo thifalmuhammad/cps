@@ -286,7 +286,7 @@ export default function FarmVerificationPage() {
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <h3 className="font-semibold text-slate-900">
-                                                            {farm.cropType || 'Unknown Crop'}
+                                                            {farm.district.districtName}
                                                         </h3>
                                                         <p className="text-sm text-slate-600 mt-1">
                                                             👨‍🌾 {farm.farmer.name}
@@ -354,10 +354,7 @@ export default function FarmVerificationPage() {
                                                 <span className="font-medium text-slate-700">Year:</span>
                                                 <p className="text-slate-900">{selectedFarm.plantingYear}</p>
                                             </div>
-                                            <div>
-                                                <span className="font-medium text-slate-700">Crop Type:</span>
-                                                <p className="text-slate-900">{selectedFarm.cropType || 'N/A'}</p>
-                                            </div>
+
                                         </div>
                                     </div>
 

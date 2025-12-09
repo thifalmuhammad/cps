@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polygon, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
 import L from 'leaflet';
 import { RefreshCw, MapPin, Users, Warehouse, TrendingUp, CheckCircle2, AlertCircle, Download } from 'lucide-react';
@@ -37,6 +37,9 @@ export default function AdminDashboard() {
   const [center] = useState([-6.2088, 106.8456]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [selectedFarmId, setSelectedFarmId] = useState(null);
+  const mapRef = useRef(null);
+  const layerRefs = useRef({});
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -193,23 +196,65 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  const handleFarmAction = async (farmUuid, action) => {
+  const handleFarmClick = (farm) => {
+    setSelectedFarmId(farm.uuid);
+    
+    const geometryString = farm.verifiedGeometry || farm.inputCoordinates;
+    
+    if (!geometryString || !mapRef.current) return;
+    
     try {
-      // This would typically call an API to approve/reject the farm
-      console.log(`${action} farm:`, farmUuid);
-
-      // For now, just show a confirmation and refresh data
-      const actionText = action === 'approve' ? 'approved' : 'rejected';
-      if (window.confirm(`Are you sure you want to ${action} this farm?`)) {
-        // Here you would call the actual API
-        // await farmAPI.updateStatus(farmUuid, action);
-
-        alert(`Farm ${actionText} successfully!`);
-        fetchData(true);
+      const geom = JSON.parse(geometryString);
+      let coords = null;
+      
+      if (farm.verifiedGeometry) {
+        let geometry = geom;
+        
+        if (geom.type === 'FeatureCollection' && geom.features?.[0]) {
+          geometry = geom.features[0].geometry;
+        } else if (geom.type === 'Feature') {
+          geometry = geom.geometry;
+        }
+        
+        let coordinates = geometry.coordinates;
+        
+        if (geometry.type === 'MultiPolygon') {
+          coordinates = coordinates[0];
+        }
+        
+        if (coordinates && coordinates[0] && Array.isArray(coordinates[0])) {
+          const ring = coordinates[0];
+          const lngs = ring.map(c => c[0]).filter(v => !isNaN(v));
+          const lats = ring.map(c => c[1]).filter(v => !isNaN(v));
+          
+          if (lats.length > 0 && lngs.length > 0) {
+            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+            const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+            coords = [centerLat, centerLng];
+          }
+        }
+      } else {
+        if (geom.type === 'Point' && geom.coordinates && geom.coordinates.length === 2) {
+          const lng = parseFloat(geom.coordinates[0]);
+          const lat = parseFloat(geom.coordinates[1]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            coords = [lat, lng];
+          }
+        }
       }
-    } catch (error) {
-      console.error(`Error ${action}ing farm:`, error);
-      alert(`Failed to ${action} farm. Please try again.`);
+      
+      if (coords && !isNaN(coords[0]) && !isNaN(coords[1])) {
+        mapRef.current.setView(coords, 16);
+        
+        setTimeout(() => {
+          const layer = layerRefs.current[farm.uuid];
+          if (layer && layer.openPopup) {
+            layer.openPopup();
+          }
+        }, 300);
+      }
+    } catch (e) {
+      console.error('Error parsing coordinates:', e);
     }
   };
 
@@ -309,6 +354,7 @@ export default function AdminDashboard() {
                   center={[2.5, 99.5]}
                   zoom={9}
                   style={{ height: '500px', width: '100%' }}
+                  ref={mapRef}
                 >
                   <TileLayer
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -352,6 +398,7 @@ export default function AdminDashboard() {
                               fillOpacity: 0.3
                             }}
                             onEachFeature={(feature, layer) => {
+                              layerRefs.current[farm.uuid] = layer;
                               layer.bindPopup(`
                                 <div class="p-3 min-w-48">
                                   <h3 class="font-bold text-slate-900">${farm.farmer?.name || 'Unknown'}</h3>
@@ -385,7 +432,13 @@ export default function AdminDashboard() {
                         }
 
                         return (
-                          <Marker key={farm.uuid} position={coords}>
+                          <Marker 
+                            key={farm.uuid} 
+                            position={coords}
+                            ref={(ref) => {
+                              if (ref) layerRefs.current[farm.uuid] = ref;
+                            }}
+                          >
                             <Popup>
                               <div className="p-3 min-w-48">
                                 <h3 className="font-bold text-slate-900">{farm.farmer?.name || 'Unknown'}</h3>
@@ -568,7 +621,12 @@ export default function AdminDashboard() {
                     {allFarms
                       .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                       .map((farm) => (
-                      <tr key={farm.uuid} className="hover:bg-slate-50">
+                      <tr 
+                        key={farm.uuid} 
+                        onClick={() => handleFarmClick(farm)}
+                        className="hover:bg-slate-50 cursor-pointer"
+                        style={selectedFarmId === farm.uuid ? { backgroundColor: '#eff6ff' } : {}}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-slate-900">{farm.farmer?.name || 'Unknown'}</div>
                           <div className="text-xs text-slate-500">{farm.farmer?.email}</div>
