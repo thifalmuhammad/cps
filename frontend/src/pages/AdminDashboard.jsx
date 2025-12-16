@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [recentFarms, setRecentFarms] = useState([]);
   const [allFarms, setAllFarms] = useState([]);
   const [verifiedFarms, setVerifiedFarms] = useState([]);
+  const [districtBoundaries, setDistrictBoundaries] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -122,6 +123,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    fetch('/districts.geojson')
+      .then(res => res.json())
+      .then(data => setDistrictBoundaries(data))
+      .catch(err => console.log('District boundaries not loaded:', err));
   }, []);
 
   // Auto-refresh every 5 minutes
@@ -360,6 +365,27 @@ export default function AdminDashboard() {
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
                   />
+                  {districtBoundaries && (
+                    <GeoJSONLayer
+                      data={districtBoundaries}
+                      style={{
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 0.6,
+                        fillOpacity: 0
+                      }}
+                      onEachFeature={(feature, layer) => {
+                        if (feature.properties?.name) {
+                          layer.bindPopup(`
+                            <div class="p-2">
+                              <p class="font-bold text-slate-900">${feature.properties.name}</p>
+                              <p class="text-xs text-slate-600">Kecamatan</p>
+                            </div>
+                          `);
+                        }
+                      }}
+                    />
+                  )}
                   {(verifiedFarms.length > 0 ? verifiedFarms : allFarms).map((farm) => {
                     try {
                       console.log(`🗺️ Processing farm for map: ${farm.uuid}`);
