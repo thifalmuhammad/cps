@@ -17,6 +17,39 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+function DistrictLabels({ data }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!data || !map) return;
+    
+    const labels = [];
+    data.features?.forEach((feature) => {
+      if (feature.properties?.NAME_3 && feature.geometry) {
+        const layer = L.geoJSON(feature.geometry);
+        const bounds = layer.getBounds();
+        const center = bounds.getCenter();
+        
+        const label = L.marker(center, {
+          icon: L.divIcon({
+            className: 'district-label',
+            html: `<div style="background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${feature.properties.NAME_3}</div>`,
+            iconSize: null
+          })
+        });
+        label.addTo(map);
+        labels.push(label);
+      }
+    });
+    
+    return () => {
+      labels.forEach(label => map.removeLayer(label));
+    };
+  }, [data, map]);
+  
+  return null;
+}
+
 export default function AdminDashboard() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   const { user } = useAuth();
@@ -41,6 +74,7 @@ export default function AdminDashboard() {
   const [selectedFarmId, setSelectedFarmId] = useState(null);
   const mapRef = useRef(null);
   const layerRefs = useRef({});
+  const districtLabels = useRef([]);
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -366,29 +400,18 @@ export default function AdminDashboard() {
                     attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
                   />
                   {districtBoundaries && (
-                    <GeoJSONLayer
-                      data={districtBoundaries}
-                      style={{
-                        color: '#ffffff',
-                        weight: 2,
-                        opacity: 0.6,
-                        fillOpacity: 0
-                      }}
-                      onEachFeature={(feature, layer) => {
-                        if (feature.properties?.NAME_3) {
-                          const bounds = layer.getBounds();
-                          const center = bounds.getCenter();
-                          const label = L.marker(center, {
-                            icon: L.divIcon({
-                              className: 'district-label',
-                              html: `<div style="background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${feature.properties.NAME_3}</div>`,
-                              iconSize: null
-                            })
-                          });
-                          label.addTo(layer._map || window.map);
-                        }
-                      }}
-                    />
+                    <>
+                      <GeoJSONLayer
+                        data={districtBoundaries}
+                        style={{
+                          color: '#ffffff',
+                          weight: 2,
+                          opacity: 0.6,
+                          fillOpacity: 0
+                        }}
+                      />
+                      <DistrictLabels data={districtBoundaries} />
+                    </>
                   )}
                   {(verifiedFarms.length > 0 ? verifiedFarms : allFarms).map((farm) => {
                     try {
