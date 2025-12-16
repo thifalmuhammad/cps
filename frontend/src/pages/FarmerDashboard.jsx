@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON as GeoJSONLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON as GeoJSONLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { MapPin, TrendingUp, Home, User, Edit2, X, AlertTriangle } from 'lucide-react';
 import { farmAPI, productivityAPI, districtAPI } from '../services/api';
@@ -474,13 +474,17 @@ export default function FarmerDashboard({ setCurrentPage }) {
                         fillOpacity: 0
                       }}
                       onEachFeature={(feature, layer) => {
-                        if (feature.properties?.name) {
-                          layer.bindPopup(`
-                            <div class="p-2">
-                              <p class="font-bold text-slate-900">${feature.properties.name}</p>
-                              <p class="text-xs text-slate-600">Kecamatan</p>
-                            </div>
-                          `);
+                        if (feature.properties?.NAME_3) {
+                          const bounds = layer.getBounds();
+                          const center = bounds.getCenter();
+                          const label = L.marker(center, {
+                            icon: L.divIcon({
+                              className: 'district-label',
+                              html: `<div style="background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${feature.properties.NAME_3}</div>`,
+                              iconSize: null
+                            })
+                          });
+                          label.addTo(layer._map || window.map);
                         }
                       }}
                     />
