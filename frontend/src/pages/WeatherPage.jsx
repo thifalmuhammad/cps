@@ -1,36 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { districtAPI } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
 import Card from '../components/Card';
 import { Cloud, CloudRain, Sun, Wind, Droplets, Thermometer } from 'lucide-react';
 
 export default function WeatherPage() {
-  const { user } = useAuth();
   const [districts, setDistricts] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchDistricts = async () => {
-      try {
-        setLoading(true);
-        const res = await districtAPI.getAll();
-        setDistricts(res.data || []);
-        if (res.data && res.data.length > 0) {
-          setSelectedDistrict(res.data[0]);
-          fetchWeather(res.data[0].districtCode);
-        }
-      } catch (err) {
-        setError('Failed to load districts');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDistricts();
-  }, []);
+  const [yearlyWeather, setYearlyWeather] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(2024);
+  const [availableYears, setAvailableYears] = useState([]);
 
   const generateLevel4Codes = (level3Code) => {
     const codes = [];
@@ -112,6 +93,35 @@ export default function WeatherPage() {
       setWeatherLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const res = await districtAPI.getAll();
+        setDistricts(res.data || []);
+        if (res.data && res.data.length > 0) {
+          setSelectedDistrict(res.data[0]);
+          fetchWeather(res.data[0].districtCode);
+        }
+      } catch (err) {
+        setError('Failed to load districts');
+      }
+    };
+    fetchDistricts();
+    
+    fetch('/yearly-weather.json')
+      .then(res => res.json())
+      .then(data => {
+        setYearlyWeather(data);
+        if (data.kecamatan?.[0]?.tahun) {
+          const years = data.kecamatan[0].tahun.map(y => y.tahun);
+          setAvailableYears(years);
+          setSelectedYear(years[years.length - 1]);
+        }
+      })
+      .catch(err => console.log('Yearly weather not loaded:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDistrictChange = (district) => {
     setSelectedDistrict(district);
@@ -214,6 +224,94 @@ export default function WeatherPage() {
             </Card>
           </div>
         ) : null}
+
+        {yearlyWeather && selectedDistrict && (
+          <div className="mt-8">
+            <Card>
+              <div className="border-b border-slate-200 pb-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Rekap Cuaca Tahunan</h2>
+                    <p className="text-sm text-slate-600 mt-1">Data historis cuaca dominan per tahun</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">Filter Tahun</label>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                      className="px-3 py-1 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    >
+                      {availableYears.map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Kecamatan</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase">Cuaca Dominan</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase">Curah Hujan</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase">Suhu Rata-rata</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase">Kelembapan</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase">Kecepatan Angin</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {yearlyWeather.kecamatan.sort((a, b) => a.kecamatan.localeCompare(b.kecamatan)).map((district) => {
+                      const yearData = district.tahun.find(y => y.tahun === selectedYear);
+                      const isSelected = district.kecamatan === selectedDistrict.districtName;
+                      return (
+                        <tr key={district.kecamatan} className={isSelected ? 'bg-slate-100' : 'hover:bg-slate-50'}>
+                          <td className="px-4 py-3">
+                            <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'text-slate-700'}`}>
+                              {district.kecamatan}
+                              {isSelected && <span className="ml-2 text-xs text-slate-500">(Terpilih)</span>}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                              yearData?.cuaca_dominan === 'Hujan' 
+                                ? 'bg-blue-100 text-blue-800'
+                                : yearData?.cuaca_dominan === 'Berawan'
+                                ? 'bg-slate-200 text-slate-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {yearData?.cuaca_dominan === 'Hujan' && <CloudRain className="h-4 w-4" />}
+                              {yearData?.cuaca_dominan === 'Berawan' && <Cloud className="h-4 w-4" />}
+                              {yearData?.cuaca_dominan === 'Cerah' && <Sun className="h-4 w-4" />}
+                              {yearData?.cuaca_dominan || '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-slate-700">
+                            {yearData?.curah_hujan ? `${yearData.curah_hujan} mm` : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-slate-700">
+                            {yearData?.suhu_rata ? `${yearData.suhu_rata}°C` : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-slate-700">
+                            {yearData?.kelembapan ? `${yearData.kelembapan}%` : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-slate-700">
+                            {yearData?.kecepatan_angin ? `${yearData.kecepatan_angin} km/h` : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-500">Periode data: {yearlyWeather.periode} • Kabupaten: {yearlyWeather.kabupaten}</p>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

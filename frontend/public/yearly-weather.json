@@ -1,0 +1,152 @@
+{
+  "kabupaten": "Aceh Tengah",
+  "periode": "2020-2024",
+  "satuan": {
+    "curah_hujan": "mm/tahun",
+    "kecepatan_angin": "km/jam",
+    "suhu_rata": "°C",
+    "kelembapan": "%"
+  },
+  "kecamatan": [
+    {
+      "kecamatan": "Bebesen",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 95 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3050, "kecepatan_angin": 11, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2100, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 92 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2000, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 91 }
+      ]
+    },
+    {
+      "kecamatan": "Pegasing",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3100, "kecepatan_angin": 10, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3150, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 12, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2200, "kecepatan_angin": 10, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2800, "kecepatan_angin": 10, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Laut Tawar",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3200, "kecepatan_angin": 10, "suhu_rata": 12, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3250, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3100, "kecepatan_angin": 12, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 9, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 10, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Kebayakan",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 9, "suhu_rata": 14, "kelembapan": 95 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2022, "cuaca_dominan": "Berawan", "curah_hujan": 2200, "kecepatan_angin": 9, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2100, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 92 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2000, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 91 }
+      ]
+    },
+    {
+      "kecamatan": "Bintang",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3050, "kecepatan_angin": 9, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 10, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 9, "suhu_rata": 14, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2850, "kecepatan_angin": 9, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Silih Nara",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3150, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3200, "kecepatan_angin": 12, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3100, "kecepatan_angin": 12, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Ketol",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 95 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2150, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 92 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2050, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 91 }
+      ]
+    },
+    {
+      "kecamatan": "Celala",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3100, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3050, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 12, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Runsip Antara",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Berawan", "curah_hujan": 1900, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 90 },
+        { "tahun": 2021, "cuaca_dominan": "Berawan", "curah_hujan": 1850, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 90 },
+        { "tahun": 2022, "cuaca_dominan": "Berawan", "curah_hujan": 1800, "kecepatan_angin": 9, "suhu_rata": 17, "kelembapan": 89 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 1750, "kecepatan_angin": 9, "suhu_rata": 17, "kelembapan": 88 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 1700, "kecepatan_angin": 9, "suhu_rata": 17, "kelembapan": 88 }
+      ]
+    },
+    {
+      "kecamatan": "Linge",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3200, "kecepatan_angin": 12, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3250, "kecepatan_angin": 12, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3150, "kecepatan_angin": 13, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 3050, "kecepatan_angin": 12, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 12, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Kute Panang",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 95 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 11, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2150, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 92 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2050, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 91 }
+      ]
+    },
+    {
+      "kecamatan": "Atu Lintang",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3100, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 96 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 3150, "kecepatan_angin": 11, "suhu_rata": 13, "kelembapan": 95 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 3050, "kecepatan_angin": 12, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2024, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 92 }
+      ]
+    },
+    {
+      "kecamatan": "Jagong Jeget",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 3000, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 95 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 2950, "kecepatan_angin": 10, "suhu_rata": 14, "kelembapan": 94 },
+        { "tahun": 2022, "cuaca_dominan": "Hujan", "curah_hujan": 2900, "kecepatan_angin": 11, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2023, "cuaca_dominan": "Hujan", "curah_hujan": 2850, "kecepatan_angin": 10, "suhu_rata": 15, "kelembapan": 92 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2150, "kecepatan_angin": 9, "suhu_rata": 16, "kelembapan": 91 }
+      ]
+    },
+    {
+      "kecamatan": "Bies",
+      "tahun": [
+        { "tahun": 2020, "cuaca_dominan": "Hujan", "curah_hujan": 2800, "kecepatan_angin": 9, "suhu_rata": 15, "kelembapan": 94 },
+        { "tahun": 2021, "cuaca_dominan": "Hujan", "curah_hujan": 2750, "kecepatan_angin": 9, "suhu_rata": 15, "kelembapan": 93 },
+        { "tahun": 2022, "cuaca_dominan": "Berawan", "curah_hujan": 2100, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 92 },
+        { "tahun": 2023, "cuaca_dominan": "Berawan", "curah_hujan": 2050, "kecepatan_angin": 8, "suhu_rata": 16, "kelembapan": 91 },
+        { "tahun": 2024, "cuaca_dominan": "Berawan", "curah_hujan": 2000, "kecepatan_angin": 8, "suhu_rata": 17, "kelembapan": 90 }
+      ]
+    }
+  ]
+}
